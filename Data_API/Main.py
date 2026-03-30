@@ -3,12 +3,16 @@ from fastapi import FastAPI, HTTPException, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
-from PytutorData import Student, engine, SessionLocal, QuizResults
+from PytutorData import Student, engine, SessionLocal, QuizResults, QuizTopic
 from PytutorDbModels import StudentResponse, StudentCreate, AnswerRequest, QuizResultsResponse, QuizResultsCreate
 from groq import Groq
 import json
 import re
 from typing import List, Optional
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 app = FastAPI()
@@ -150,9 +154,9 @@ def get_db():
 # Update questions scores
 @app.post("/quizresults/", response_model=QuizResultsResponse)
 def create_assesments(result: QuizResultsCreate, db: Session = Depends(get_db)):
-
+    logger.info("Creating new quiz result...")
     new_results = QuizResults(
-        student_id=1,
+        student_id=3,
         topics_interested=result.topics_interested,
         time_spent=result.time_spent,
         score=result.score,
@@ -164,7 +168,24 @@ def create_assesments(result: QuizResultsCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(new_results)
 
+    quiz_id = new_results.quiz_id
+    logger.info(f"Quiz ID created: {quiz_id}")
+
+    topics_list = result.topics_interested.split(",")
+    logger.info(f"Topics list : {topics_list}")
+
+    for topic in topics_list:
+        new_topic = QuizTopic(
+
+            quiz_id=quiz_id,
+            topic=topic.strip()
+        )
+        db.add(new_topic)
+
+    db.commit()
     return new_results
+
+
 # @app.post("/students/")
 # async def create_student(student: StudentCreate, request: Request):
 #     raw_body = await request.body()  # raw bytes

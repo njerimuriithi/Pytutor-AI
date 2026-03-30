@@ -11,10 +11,10 @@ DATABASE_URL = (
 )
 engine = create_engine(DATABASE_URL, echo=True)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-base = declarative_base()
+Base = declarative_base()
 
 
-class Student(base):
+class Student(Base):
     __tablename__ = "student"
     student_id = Column(Integer, primary_key=True, index=True)
     first_name = Column(String(255))
@@ -24,15 +24,22 @@ class Student(base):
     registered_date = Column(DateTime, default=datetime.utcnow)
 
 
-class QuizResults(base):
+class QuizResults(Base):
     __tablename__ = "quizresults"
     quiz_id = Column(Integer, primary_key=True, index=True)
-    student_id = Column(String(255), default="1")
+    student_id = Column(String(255), default="2")
     time_spent = Column(Integer)  # seconds
     topics_interested = Column(String(255))
     score = Column(Integer)
     isHelpful = Column(Boolean)
     total_questions = Column(Integer)
+
+
+class QuizTopic(Base):
+    __tablename__ = "quiztopic"
+    id = Column(Integer, primary_key=True, index=True)
+    quiz_id = Column(Integer)
+    topic = Column(String(255))
 
 
 # def Test_db():

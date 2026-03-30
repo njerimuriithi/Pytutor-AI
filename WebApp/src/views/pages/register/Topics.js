@@ -1,23 +1,29 @@
 export const basicTopics=[
   'Python Introduction',
   'Python Installation',
-  'Variables and Data Types',
-  'Operators and Expressions',
+  'Variables ' ,
+  'Data Types',
+  'Operators ' ,
+  'Expressions',
   'Conditional Statements',
   'Loops'
 ]
 export const InterMediateTopics = [
   'Functions and Modules',
-  'Lists, Tuples, and Dictionaries',
+  'Lists, ' ,
+  'Tuples, ' ,
+  'Dictionaries',
   'File Handling',
   'Error Handling / Exceptions',
   'Object-Oriented Programming'
 ]
 export const advancedTopics = [
   'Decorators and Generators',
-  'Lambda and Functional Programming',
+  'Lambda ',
+  ' Functional Programming',
   'Regular Expressions',
-  'Multithreading and Concurrency',
+  'Multithreading ',
+  ' Concurrency',
   'Working with APIs'
 ]
 export const pythonTopics = [
