@@ -29,6 +29,26 @@ export async function fetchQuestion(level, topics) {
     throw error;
   }
 }
+export async function fetchTopicToLearn(level, topics) {
+  try {
+    const topicsStr = Array.isArray(topics)
+      ? topics.map(t => t.trim()).join(",")
+      : topics.trim();
+
+    const response = await axios.get(`${api_router}/learn`, {
+
+      params: {
+        level: level,
+        topics: topicsStr,
+      },
+    });
+    console.log(response.data);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching lesson:", error);
+    throw error;
+  }
+}
 
 export async function saveQuizResults(results) {
   try {
@@ -38,4 +58,32 @@ export async function saveQuizResults(results) {
     console.error("Error saving quiz results:", error);
   }
 }
+export async function fetchStudentsData() {
+  try {
+    const response = await axios.get(`${api_router}/dashboard/students`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching dashboard students:", error);
+    throw error;
+  }
+}
 
+export async function fetchTopicsData() {
+  try {
+    const response = await axios.get(`${api_router}/dashboard/topics`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching topics data:", error);
+    throw error;
+  }
+}
+
+export async function fetchStudentsPerfomanceData() {
+  try {
+    const response = await axios.get(`${api_router}/dashboard/studentperformance`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching topics data:", error);
+    throw error;
+  }
+}

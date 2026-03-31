@@ -59,6 +59,24 @@ Format:
   ]
 }}
 """
+SYSTEM_PROMPT_COURSE_TEMPLATE = """
+You are a Python tutor.
+
+Teach the topic(s): {topics}
+Level: {level}
+
+Format your response using Markdown.
+
+Structure:
+## Topic Explanation
+## Key Concepts
+## Example Code
+## Summary
+
+Use tables where appropriate.
+Use Python code blocks with ```python.
+Keep explanations clear and structured.
+"""
 
 
 app.add_middleware(
@@ -68,6 +86,72 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.get("/learn")
+def get_lesson(level: Optional[str] = "beginner",
+               topics: Optional[str] = "all"):
+    try:
+        print("---- /learn endpoint called ----")
+        print(f"Raw params -> level: {level}, topics: {topics}")
+
+        # Ensure topics is string
+        if isinstance(topics, list):
+            topics_str = ",".join(topics)
+        else:
+            topics_str = topics
+
+        print(f"Formatted topics_str: {topics_str}")
+
+        # Format system prompt
+        system_prompt = SYSTEM_PROMPT_COURSE_TEMPLATE.format(
+            level=level,
+            topics=topics_str
+        )
+
+        print("System prompt created successfully")
+        print(system_prompt)
+
+        # Messages
+        messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": f"Teach me {topics_str} at {level} level"}
+        ]
+
+        print("Messages prepared:")
+        print(messages)
+
+        # Call model
+        print("Calling model...")
+        completion = client.chat.completions.create(
+            model="openai/gpt-oss-20b",
+            messages=messages,
+            temperature=0.2
+        )
+
+        print("Model response received")
+
+        lesson = completion.choices[0].message.content
+
+        print("Lesson content:")
+        print(lesson)
+
+        if not lesson or not lesson.strip():
+            print("ERROR: Lesson is empty")
+            return {"error": "Model returned empty lesson"}
+
+        print("Returning lesson response")
+
+        return {
+            "level": level,
+            "topics": topics_str,
+            "lesson": lesson
+        }
+
+    except Exception as e:
+        print("ERROR in /learn endpoint:")
+        print(str(e))
+        return {"error": str(e)}
 
 
 @app.get("/question")
@@ -156,7 +240,7 @@ def get_db():
 def create_assesments(result: QuizResultsCreate, db: Session = Depends(get_db)):
     logger.info("Creating new quiz result...")
     new_results = QuizResults(
-        student_id=3,
+        student_id=4,
         topics_interested=result.topics_interested,
         time_spent=result.time_spent,
         score=result.score,
@@ -170,6 +254,7 @@ def create_assesments(result: QuizResultsCreate, db: Session = Depends(get_db)):
 
     quiz_id = new_results.quiz_id
     logger.info(f"Quiz ID created: {quiz_id}")
+    level = result.level
 
     topics_list = result.topics_interested.split(",")
     logger.info(f"Topics list : {topics_list}")
@@ -178,7 +263,8 @@ def create_assesments(result: QuizResultsCreate, db: Session = Depends(get_db)):
         new_topic = QuizTopic(
 
             quiz_id=quiz_id,
-            topic=topic.strip()
+            topic=topic.strip(),
+            level=level
         )
         db.add(new_topic)
 

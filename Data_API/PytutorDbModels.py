@@ -33,6 +33,7 @@ class QuizResultsCreate(BaseModel):
     score: int
     total_questions: int
     isHelpful: Optional[bool] = False
+    level: str
 
 
 class QuizResultsResponse(BaseModel):

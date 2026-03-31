@@ -2,8 +2,20 @@ from fastapi import FastAPI, Depends
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from PytutorData import SessionLocal
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
+
+origins = [
+    "http://localhost:3001"
+]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 def get_db():
@@ -51,12 +63,13 @@ def get_topics_stats(db: Session = Depends(get_db)):
     try:
         Number_Of_Students_Per_Topic = text("""
          SELECT 
-            Count(DISTINCT quizresults.student_id) AS NumberOfStudentsPerTopic,
-            topic
+            COUNT(DISTINCT quizresults.student_id) AS NumberOfStudentsPerTopic,
+            quiztopic.topic,
+            quiztopic.level
             FROM quiztopic
             INNER JOIN quizresults
-            ON quiztopic.quiz_id = quizresults.quiz_id
-            GROUP BY topic
+                ON quiztopic.quiz_id = quizresults.quiz_id
+            GROUP BY quiztopic.topic, quiztopic.level
             ORDER BY NumberOfStudentsPerTopic DESC;
         """)
 
@@ -68,7 +81,8 @@ def get_topics_stats(db: Session = Depends(get_db)):
             "students_per_topic": [
                 {
                     "topic": row.topic,
-                    "count": row.NumberOfStudentsPerTopic
+                    "count": row.NumberOfStudentsPerTopic,
+                    "level": row.level
                 }
                 for row in students_per_topic
             ]
@@ -108,6 +122,62 @@ def get_studenttopics_stats(db: Session = Depends(get_db)):
 
                 }
                 for row in students_per_topic_details
+            ]
+        }
+
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.get("/dashboard/studentperformance")
+def get_student_data(db: Session = Depends(get_db)):
+    try:
+        Students_Details = text("""
+            SELECT 
+            CONCAT(S.first_name,' ',S.second_name) AS Full_Name,
+            S.student_level,
+
+            STUFF((
+                SELECT DISTINCT ', ' + QT2.topic
+                FROM quiztopic QT2
+                INNER JOIN quizresults QR2 
+                    ON QT2.quiz_id = QR2.quiz_id
+                WHERE QR2.student_id = S.student_id
+                FOR XML PATH(''), TYPE).value('.', 'NVARCHAR(MAX)'), 1, 2, '') 
+                AS Topics_Taken,
+
+                SUM(QR.time_spent) AS Total_Time_Spent,
+                MAX(QR.time_spent) AS Highest_Time_Spent,
+                SUM(QR.score) AS Total_Score,
+                SUM(QR.total_questions) AS Total_Questions
+                FROM quizresults QR
+                INNER JOIN student S
+                    ON QR.student_id = S.student_id
+                GROUP BY 
+                    S.student_id,
+                    S.first_name,
+                    S.second_name,
+                    S.student_level
+                ORDER BY Total_Time_Spent DESC;
+            """)
+
+        students_performance_details = db.execute(
+            Students_Details).fetchall()
+
+        return {
+
+            "students_performance_details": [
+                {
+                    "FullName": row.Full_Name,
+                    "studentlevel": row.student_level,
+                    "TopicsTaken": row.Topics_Taken,
+                    "TotalTimeSpent": row.Total_Time_Spent,
+                    "HighestTimeSpent": row.Highest_Time_Spent,
+                    "TotalScore": row.Total_Score,
+                    "TotalQuestions": row.Total_Questions,
+
+                }
+                for row in students_performance_details
             ]
         }
 

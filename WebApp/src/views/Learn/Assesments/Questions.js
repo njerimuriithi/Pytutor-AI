@@ -27,7 +27,8 @@ const Questions = () => {
 
   const fetchQuestions = async (level, topics) => {
     try {
-      const response = await fetchQuestion(level, topics); // make API call or system prompt call
+      const response = await fetchQuestion(level, topics);
+
       setData(response);
       setStartTime(new Date());
     } catch (error) {
@@ -89,7 +90,8 @@ console.log('question',question);
         topics_interested: topics.join(","),
         score: score,
         total_questions: data.questions.length,
-        time_spent : timeSpentSeconds
+        time_spent : timeSpentSeconds,
+        level: level
       };
 
       console.log("Submitting results:", results);

@@ -40,6 +40,7 @@ class QuizTopic(Base):
     id = Column(Integer, primary_key=True, index=True)
     quiz_id = Column(Integer)
     topic = Column(String(255))
+    level = Column(String(255))
 
 
 # def Test_db():
