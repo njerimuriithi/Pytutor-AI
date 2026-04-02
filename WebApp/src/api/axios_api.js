@@ -34,7 +34,7 @@ export async function fetchTopicToLearn(level, topics) {
     const topicsStr = Array.isArray(topics)
       ? topics.map(t => t.trim()).join(",")
       : topics.trim();
-
+    console.log('topics',topicsStr);
     const response = await axios.get(`${api_router}/learn`, {
 
       params: {

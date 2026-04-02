@@ -1,10 +1,13 @@
 import React,{useState} from 'react'
-import { CButton, CCard, CCardBody, CCardText, CCardTitle,CCardLink ,CListGroupItem,CModal, CModalHeader, CModalTitle, CModalBody, CModalFooter
+import { CButton, CCard, CCardBody, CCardText, CCardTitle,CCardLink ,CListGroupItem,CModal,
+  CModalHeader, CModalTitle, CModalBody, CModalFooter, CCarousel, CCarouselItem
 } from '@coreui/react'
-import {basicTopics,InterMediateTopics,advancedTopics} from "src/views/pages/register/Topics";
+import {basicTopics, InterMediateTopics, advancedTopics, splitLesson} from "src/views/pages/register/Topics";
 import {fetchTopicToLearn} from "src/api/axios_api";
 import ReactMarkdown from "react-markdown";
+import {useNavigate} from "react-router-dom";
 const Courses = () => {
+  const navigate = useNavigate();
   const [modalVisible, setModalVisible] = useState(false)
   const [selectedTopic, setSelectedTopic] = useState('')
   const [selectedLevel, setSelectedLevel] = useState('')
@@ -13,7 +16,9 @@ const Courses = () => {
 
   const openLessonModal = async (topic, level) => {
     setModalVisible(true);
+    setSelectedTopic(topic)
     setLoading(true);
+    setSelectedLevel(level);
 
     try {
       const data = await fetchTopicToLearn(level, topic);
@@ -25,22 +30,17 @@ const Courses = () => {
 
     setLoading(false);
   };
+  const sections = lesson.split("## ").filter(Boolean);
 
 
-  const handleTopicClick = (topic, level) => {
-    console.log(topic, level)
-    setSelectedTopic(topic)
-    setSelectedLevel(level)
-    setModalVisible(true)
-  }
   const renderTopicLinks = (topicsArray, level) => {
-    return topicsArray.map((topic, index) => (
+      return topicsArray.map((topic, index) => (
       <CListGroupItem key={index}>
         <CCardLink
           href="#"
           onClick={(e) => {
             e.preventDefault()
-            handleTopicClick(topic.trim(), level) // trim extra spaces
+            openLessonModal(topic.trim(), level)
           }}
         >
           {topic.trim()}
@@ -74,28 +74,54 @@ const Courses = () => {
 
       <CModal
         alignment="center"
-        scrollable
         visible={modalVisible}
-        onClose={() => setVisible(false)}
+        onClose={() => setModalVisible(false)}
         aria-labelledby="VerticallyCenteredScrollableExample2"
       >
         <CModalHeader>
           <CModalTitle id="VerticallyCenteredScrollableExample2">{selectedTopic}</CModalTitle>
         </CModalHeader>
+
         <CModalBody>
           {loading ? (
             <p>Loading lesson...</p>
           ) : (
-            <p>{lesson}</p>
+
+            <CCarousel controls indicators dark>
+              {sections.map((section, index) => (
+                <CCarouselItem key={index}>
+                  <div style={{ padding: "15px" }}>
+                    <ReactMarkdown>{"## " + section}</ReactMarkdown>
+                  </div>
+                </CCarouselItem>
+              ))}
+            </CCarousel>
           )}
         </CModalBody>
+        {/*<CModalBody>
+          {sections.map((section, index) => (
+
+              <div style={{ padding: "15px" }}>
+                <ReactMarkdown>{section}</ReactMarkdown>
+              </div>
+
+          ))}
+        </CModalBody>*/}
         <CModalFooter>
-          <CButton color="secondary" onClick={() => setVisible(false)}>
+          <CButton color="secondary" onClick={() => setModalVisible(false)}>
             Close
           </CButton>
-          <CButton color="primary">Test Your Understanding</CButton>
+          <CButton color="primary"
+                   onClick={() => {
+                     // Navigate to questions page
+                     navigate('/Questions', {
+                       state: { level: selectedLevel, topics:[selectedTopic] }
+                     });
+                   }}
+          >Test Your Understanding</CButton>
         </CModalFooter>
       </CModal>
+
 
     </>
   )

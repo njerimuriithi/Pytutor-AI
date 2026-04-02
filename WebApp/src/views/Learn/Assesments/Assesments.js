@@ -77,7 +77,7 @@ const Assesments = () => {
           <CButton color="primary"
                    onClick={() => {
                      // Navigate to questions page
-                     navigate('/Questions', {
+                     navigate('/Learn/Assesments/Questions', {
                        state: { level: topicLevel, topics: selected }
                      });
                    }}
