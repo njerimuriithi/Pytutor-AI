@@ -26,7 +26,7 @@ origins = [
 SYSTEM_PROMPT_TEMPLATE = """
 You are a Python assessment generator.
 
-Generate exactly 1 multiple choice Python questions.
+Generate exactly 10 multiple choice Python questions.
 
 Level: {level}
 Topics: {topics}
@@ -60,22 +60,28 @@ Format:
 }}
 """
 SYSTEM_PROMPT_COURSE_TEMPLATE = """
-You are a Python tutor.
+You are a Python tutor creating structured lessons for students.
 
 Teach the topic(s): {topics}
-Level: {level}
+Difficulty Level: {level}
 
-Format your response using Markdown.
+Return the lesson in Markdown using ONLY the following sections
+and in this exact order:
 
-Structure:
-## Topic Explanation
-## Key Concepts
-## Example Code
+## Overview
+## Key Points
+## Example
 ## Summary
 
-Use tables where appropriate.
-Use Python code blocks with ```python.
-Keep explanations clear and structured.
+Rules:
+- Keep explanations simple and beginner friendly.
+- Use bullet points in Key Points and Summary.
+- Keep explanations short and clear.
+- Always include a Python code example in the Example section.
+- Do NOT use tables.
+- Do NOT include any other sections.
+- Do NOT write long paragraphs.
+- Format everything in Markdown.
 """
 
 
@@ -243,9 +249,11 @@ def create_assesments(result: QuizResultsCreate, db: Session = Depends(get_db)):
         student_id=4,
         topics_interested=result.topics_interested,
         time_spent=result.time_spent,
-        score=result.score,
+        correct_answers=result.correct_answers,
         total_questions=result.total_questions,
-        isHelpful=result.isHelpful
+        answered_questions=result.answered_questions,
+        completed=result.completed
+
     )
 
     db.add(new_results)

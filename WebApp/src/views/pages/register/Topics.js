@@ -1,3 +1,16 @@
+
+export const splitLesson = (lessonText) => {
+  if (!lessonText) return [];
+
+  return lessonText.split("## ").filter(section => section.trim() !== "");
+};
+
+export const getGrade = (scorePercent) => {
+  if (scorePercent >= 85) return "Excellent";
+  if (scorePercent >= 70) return "Good";
+  if (scorePercent >= 50) return "Average";
+  return "Weak";
+};
 export const basicTopics=[
   'Python Introduction',
   'Python Installation',

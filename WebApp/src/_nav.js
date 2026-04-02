@@ -103,13 +103,13 @@ const _nav = [
     icon: <CIcon icon={cilDescription} customClassName="nav-icon" />,
 
   },
-  {
+  /*{
     component: CNavItem,
     name: 'Questions',
     to: '/Learn/Assesments/Questions',
     icon: <CIcon icon={cilDescription} customClassName="nav-icon" />,
 
-  },
+  },*/
 
 
   {

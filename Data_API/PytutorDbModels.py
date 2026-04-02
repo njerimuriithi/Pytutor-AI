@@ -30,19 +30,19 @@ class AnswerRequest(BaseModel):
 class QuizResultsCreate(BaseModel):
     topics_interested: str
     time_spent: int
-    score: int
     total_questions: int
-    isHelpful: Optional[bool] = False
+    correct_answers: int
+    answered_questions: int
+    completed: Optional[bool] = False
     level: str
 
 
 class QuizResultsResponse(BaseModel):
     quiz_id: int
     topics_interested: str
-    time_spent: int
-    score: int
+    correct_answers: int
     total_questions: int
-    isHelpful: bool
+    completed: bool
 
     class Config:
         from_attributes = True

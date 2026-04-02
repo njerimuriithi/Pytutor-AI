@@ -30,9 +30,11 @@ class QuizResults(Base):
     student_id = Column(String(255), default="2")
     time_spent = Column(Integer)  # seconds
     topics_interested = Column(String(255))
-    score = Column(Integer)
-    isHelpful = Column(Boolean)
+    correct_answers = Column(Integer)
+    answered_questions = Column(Integer)
+    completed = Column(Boolean)
     total_questions = Column(Integer)
+    created_at = Column(DateTime, default=datetime.utcnow)
 
 
 class QuizTopic(Base):
