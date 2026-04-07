@@ -21,6 +21,7 @@ const Dashboard = React.lazy(() => import('./views/dashboard/Dashboard'))
 const Courses = React.lazy(() => import('./views/Learn/Courses'))
 const Assesments = React.lazy(() => import('./views/Learn/Assesments/Assesments'))
 const Questions = React.lazy(() => import('./views/Learn/Assesments/Questions'))
+const StudentDashboard = React.lazy(() => import('./views/dashboard/StudentDashboard'))
 
 
 const Widgets = React.lazy(() => import('./views/widgets/Widgets'))
@@ -49,6 +50,7 @@ const routes = [
   { path: '/Learn/Courses', name: 'Courses', element: Courses ,exact: true },
   { path: '/Learn/Assesments/Assesments', name: 'Assesments', element: Assesments },
   { path: '/Learn/Assesments/Questions', name: 'Questions', element: Questions },
+  { path: '/dashboard/StudentDashboard', name: 'StudentDashboard', element: StudentDashboard },
   { path: '/widgets', name: 'Widgets', element: Widgets },
 ]
 

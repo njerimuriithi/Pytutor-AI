@@ -103,6 +103,13 @@ const _nav = [
     icon: <CIcon icon={cilDescription} customClassName="nav-icon" />,
 
   },
+  {
+    component: CNavItem,
+    name: 'Student Dashboard',
+    to: '/dashboard/StudentDashboard',
+    icon: <CIcon icon={cilDescription} customClassName="nav-icon" />,
+
+  },
   /*{
     component: CNavItem,
     name: 'Questions',
