@@ -134,31 +134,46 @@ def get_student_data(db: Session = Depends(get_db)):
     try:
         Students_Details = text("""
             SELECT 
-            CONCAT(S.first_name,' ',S.second_name) AS Full_Name,
+            CONCAT(S.first_name, ' ', S.second_name) AS Full_Name,
             S.student_level,
 
+   
             STUFF((
                 SELECT DISTINCT ', ' + QT2.topic
                 FROM quiztopic QT2
                 INNER JOIN quizresults QR2 
                     ON QT2.quiz_id = QR2.quiz_id
                 WHERE QR2.student_id = S.student_id
-                FOR XML PATH(''), TYPE).value('.', 'NVARCHAR(MAX)'), 1, 2, '') 
-                AS Topics_Taken,
+                FOR XML PATH(''), TYPE
+            ).value('.', 'NVARCHAR(MAX)'), 1, 2, '') AS Topics_Taken,
 
-                SUM(QR.time_spent) AS Total_Time_Spent,
-                MAX(QR.time_spent) AS Highest_Time_Spent,
-                SUM(QR.score) AS Total_Score,
-                SUM(QR.total_questions) AS Total_Questions
-                FROM quizresults QR
-                INNER JOIN student S
-                    ON QR.student_id = S.student_id
-                GROUP BY 
-                    S.student_id,
-                    S.first_name,
-                    S.second_name,
-                    S.student_level
-                ORDER BY Total_Time_Spent DESC;
+   
+            SUM(QR.time_spent) AS Total_Time_Spent,
+            MAX(QR.time_spent) AS Highest_Time_Spent,
+
+            SUM(QR.total_questions) AS Total_Questions,
+            SUM(QR.answered_questions) AS Total_Answered_Questions,
+            SUM(QR.correct_answers) AS Total_Correct_Answers,
+
+            COUNT(QR.quiz_id) AS Total_Attempts,
+            SUM(CASE WHEN QR.completed = 1 THEN 1 ELSE 0 END) AS Completed_Attempts,
+	        CAST(
+            (SUM(QR.correct_answers) * 100.0) / 
+            NULLIF(SUM(QR.answered_questions), 0)
+            AS DECIMAL(5,2)) AS Accuracy_Percent
+
+            FROM quizresults QR
+            INNER JOIN student S
+                ON QR.student_id = S.student_id
+
+            GROUP BY 
+                S.student_id,
+                S.first_name,
+                S.second_name,
+                S.student_level
+
+            ORDER BY Total_Time_Spent DESC;
+
             """)
 
         students_performance_details = db.execute(
@@ -173,8 +188,12 @@ def get_student_data(db: Session = Depends(get_db)):
                     "TopicsTaken": row.Topics_Taken,
                     "TotalTimeSpent": row.Total_Time_Spent,
                     "HighestTimeSpent": row.Highest_Time_Spent,
-                    "TotalScore": row.Total_Score,
+                    "TotalAnsweredQuestions": row.Total_Answered_Questions,
                     "TotalQuestions": row.Total_Questions,
+                    "CorrectAnswers": row.Total_Correct_Answers,
+                    "Attempts": row.Total_Attempts,
+                    "CompleteQuestions": row.Completed_Attempts,
+                    "AccuracyPercentage": row.Accuracy_Percent
 
                 }
                 for row in students_performance_details

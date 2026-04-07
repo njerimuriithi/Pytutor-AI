@@ -67,7 +67,7 @@ const Dashboard = () => {
     const loadData = async () => {
       try {
         const res = await fetchStudentsPerfomanceData()
-        console.log(res.students_performance_details)
+        console.log('student performance',res.students_performance_details)
         setStudentPerformance(res.students_performance_details)
       } catch (err) {
         console.error(err)
@@ -79,11 +79,6 @@ const Dashboard = () => {
     if (!questions) return 0
     return ((score / questions) * 100).toFixed(0)
   }
-
-
-
-
-
 
 
   return (
@@ -101,7 +96,7 @@ const Dashboard = () => {
       <CRow>
         <CCol xs>
           <CCard className="mb-4">
-            <CCardHeader>Students Details</CCardHeader>
+            <CCardHeader>Students Performance</CCardHeader>
             <CCardBody>
              <CTable align="middle" className="mb-0 border" hover responsive>
                 <CTableHead className="text-nowrap">
@@ -117,6 +112,8 @@ const Dashboard = () => {
                       Time Spent
                     </CTableHeaderCell>
                     <CTableHeaderCell className="bg-body-tertiary">Questions Attempted</CTableHeaderCell>
+                    <CTableHeaderCell className="bg-body-tertiary">Total Attempts</CTableHeaderCell>
+                    <CTableHeaderCell className="bg-body-tertiary">Accuracy%</CTableHeaderCell>
                   </CTableRow>
                 </CTableHead>
                 <CTableBody>
@@ -125,7 +122,7 @@ const Dashboard = () => {
 
                       <CTableDataCell>
                         <div>{item.FullName}</div>
-                       {/* <div className="small text-body-secondary text-nowrap">
+                        {/*<div className="small text-body-secondary text-nowrap">
                           <span>{item.user.new ? 'New' : 'Recurring'}</span> | Registered:{' '}
                           {item.user.registered}
                         </div>*/}
@@ -138,7 +135,7 @@ const Dashboard = () => {
                       </CTableDataCell>
                       <CTableDataCell>
                         <div className="d-flex justify-content-between text-nowrap">
-                          <div className="fw-semibold">{item.TotalTimeSpent}%</div>
+                          <div className="fw-semibold">{item.TotalTimeSpent}</div>
 
                         </div>
                         <CProgress thin color="success" value={item.TotalTimeSpent} />
@@ -146,13 +143,20 @@ const Dashboard = () => {
                       <CTableDataCell className="text-center">
                         <div>{item.TotalQuestions}</div>
                       </CTableDataCell>
-                   {/*   <CTableDataCell className="text-center">
-                        <CIcon size="xl" icon={item.payment.icon} />
+                      <CTableDataCell className="text-center">
+                        <div className="fw-semibold">{item.Attempts}</div>
                       </CTableDataCell>
                       <CTableDataCell>
-                        <div className="small text-body-secondary text-nowrap">Last login</div>
-                        <div className="fw-semibold text-nowrap">{item.activity}</div>
-                      </CTableDataCell>*/}
+                        <div className="d-flex justify-content-between text-nowrap">
+                          <div className="fw-semibold">{item.AccuracyPercentage}</div>
+
+                        </div>
+                        <CProgress thin color="success" value={item.AccuracyPercentage} />
+                      </CTableDataCell>
+                      <CTableDataCell>
+                      {/*  <div className="small text-body-secondary text-nowrap">Last login</div>
+                        <div className="fw-semibold text-nowrap">{item.activity}</div>*/}
+                      </CTableDataCell>
                     </CTableRow>
                   ))}
                 </CTableBody>
