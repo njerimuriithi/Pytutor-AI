@@ -1,21 +1,21 @@
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, APIRouter
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from PytutorData import SessionLocal
 from fastapi.middleware.cors import CORSMiddleware
 
-app = FastAPI()
+router = APIRouter()
 
-origins = [
-    "http://localhost:3001"
-]
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# origins = [
+#     "http://localhost:3000"
+# ]
+# router.add_middleware(
+#     CORSMiddleware,
+#     allow_origins=origins,
+#     allow_credentials=True,
+#     allow_methods=["*"],
+#     allow_headers=["*"],
+# )
 
 
 def get_db():
@@ -26,7 +26,7 @@ def get_db():
         db.close()
 
 
-@app.get("/dashboard/students")
+@router.get("/dashboard/students")
 def get_student_stats(db: Session = Depends(get_db)):
     try:
         total_students_query = text("""
@@ -58,7 +58,7 @@ def get_student_stats(db: Session = Depends(get_db)):
         return {"error": str(e)}
 
 
-@app.get("/dashboard/topics")
+@router.get("/dashboard/topics")
 def get_topics_stats(db: Session = Depends(get_db)):
     try:
         Number_Of_Students_Per_Topic = text("""
@@ -92,7 +92,7 @@ def get_topics_stats(db: Session = Depends(get_db)):
         return {"error": str(e)}
 
 
-@app.get("/dashboard/studenttopics")
+@router.get("/dashboard/studenttopics")
 def get_studenttopics_stats(db: Session = Depends(get_db)):
     try:
         Students_Per_Topic_Details = text("""
@@ -129,13 +129,15 @@ def get_studenttopics_stats(db: Session = Depends(get_db)):
         return {"error": str(e)}
 
 
-@app.get("/dashboard/studentperformance")
+@router.get("/dashboard/studentperformance")
 def get_student_data(db: Session = Depends(get_db)):
     try:
         Students_Details = text("""
             SELECT 
             CONCAT(S.first_name, ' ', S.second_name) AS Full_Name,
             S.student_level,
+            S.student_id,
+                                
 
    
             STUFF((
@@ -193,7 +195,8 @@ def get_student_data(db: Session = Depends(get_db)):
                     "CorrectAnswers": row.Total_Correct_Answers,
                     "Attempts": row.Total_Attempts,
                     "CompleteQuestions": row.Completed_Attempts,
-                    "AccuracyPercentage": row.Accuracy_Percent
+                    "AccuracyPercentage": row.Accuracy_Percent,
+                    "studentId": row.student_id
 
                 }
                 for row in students_performance_details

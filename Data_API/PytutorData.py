@@ -45,6 +45,16 @@ class QuizTopic(Base):
     level = Column(String(255))
 
 
+class LearningResults(Base):
+    __tablename__ = "learning_sessions"
+    id = Column(Integer, primary_key=True, index=True)
+    student_id = Column(Integer)
+    topic = Column(String(255))
+    level = Column(String(255))
+    time_spent = Column(Integer)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
 # def Test_db():
 #     db = SessionLocal()
 #     new_student = StudentCreate(

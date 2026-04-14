@@ -1,21 +1,10 @@
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, APIRouter
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from PytutorData import SessionLocal
 from fastapi.middleware.cors import CORSMiddleware
 
-app = FastAPI()
-
-origins = [
-    "http://localhost:3001"
-]
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+router = APIRouter()
 
 
 def get_db():
@@ -26,13 +15,14 @@ def get_db():
         db.close()
 
 
-@app.get("/studentdashboard/{studentid}")
+@router.get("/studentdashboard/{studentid}")
 def get_individual_student_details(studentid: int, db: Session = Depends(get_db)):
     try:
         individual_students_query = text("""
             SELECT 
             CONCAT(S.first_name, ' ', S.second_name) AS Full_Name,
             S.student_level,
+            S.first_name,                             
 
             
             STUFF((
@@ -108,20 +98,43 @@ def get_individual_student_details(studentid: int, db: Session = Depends(get_db)
                     ORDER BY Accuracy_Percent ASC;
                     """
                                       )
+        Topics_Learned = text("""
+                    SELECT 
+                        topic,
+                        COUNT(*) AS times_learned,
+                        SUM(time_spent) AS total_time
+                    FROM learning_sessions
+                    WHERE student_id = :studentid
+                    GROUP BY topic
+                    ORDER BY times_learned DESC;""")
         Student_Activity = text("""
                     SELECT 
-                    QR.quiz_id,
-                    QR.created_at,
-                    QR.time_spent,
-                    QR.answered_questions,
-                    QR.correct_answers,
-                    QR.completed,
-                    QT.topic
-                FROM quizresults QR
-                INNER JOIN quiztopic QT
-                    ON QR.quiz_id = QT.quiz_id
-                WHERE QR.student_id = :studentid
-                ORDER BY QR.created_at DESC;
+                    'Course' AS activity_type,
+                    LS.topic,
+                    LS.level,
+                    LS.time_spent,
+                    LS.created_at,
+	                  100 AS progress_percent, 
+                    1 AS completed
+                    FROM learning_sessions LS
+                    WHERE LS.student_id = 4
+                    UNION ALL
+
+                    SELECT 
+                        'Assessment' AS activity_type,
+                        QT.topic,
+                        NULL AS level,
+                        QR.time_spent,
+                        QR.created_at,CAST(
+                            (QR.answered_questions * 100.0) / NULLIF(QR.total_questions, 0)
+                        AS INT) AS progress_percent,
+
+                        QR.completed
+                    FROM quizresults QR
+                    INNER JOIN quiztopic QT 
+                        ON QR.quiz_id = QT.quiz_id
+                    WHERE QR.student_id = :studentid
+                    ORDER BY created_at DESC;
             """)
 
         individual_students_result = db.execute(
@@ -132,12 +145,14 @@ def get_individual_student_details(studentid: int, db: Session = Depends(get_db)
                                         "studentid": studentid}).fetchall()
         activity_result = db.execute(
             Student_Activity, {"studentid": studentid}).fetchall()
-
+        topics_result = db.execute(
+            Topics_Learned, {"studentid": studentid}).fetchall()
         return {
             "student_details": [dict(row._mapping) for row in individual_students_result],
             "poor_performing_topics": [dict(row._mapping) for row in poor_topics_result],
             "best_performing_topics": [dict(row._mapping) for row in best_topics_result],
-            "student_activity": [dict(row._mapping) for row in activity_result]
+            "student_activity": [dict(row._mapping) for row in activity_result],
+            "topics_result": [dict(row._mapping) for row in topics_result]
         }
 
     except Exception as e:

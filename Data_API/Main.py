@@ -3,24 +3,29 @@ from fastapi import FastAPI, HTTPException, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
-from PytutorData import Student, engine, SessionLocal, QuizResults, QuizTopic
+from PytutorData import Student, engine, SessionLocal, QuizResults, LearningResults, QuizTopic
 from PytutorDbModels import StudentResponse, StudentCreate, AnswerRequest, QuizResultsResponse, QuizResultsCreate
 from groq import Groq
 import json
 import re
 from typing import List, Optional
 import logging
+from StudentDashboard import router as student_router
+from Dashboard import router as dashboard_router
+
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
 app = FastAPI()
+app.include_router(student_router)
+app.include_router(dashboard_router)
 client = Groq(
     api_key="")
 
 origins = [
-    "http://localhost:3001"
+    "http://localhost:3000"
 ]
 
 SYSTEM_PROMPT_TEMPLATE = """
@@ -278,6 +283,26 @@ def create_assesments(result: QuizResultsCreate, db: Session = Depends(get_db)):
 
     db.commit()
     return new_results
+
+
+@app.post("/learning-session")
+def save_learning_session(session: dict, db: Session = Depends(get_db)):
+    try:
+        new_session = LearningResults(
+            student_id=session["student_id"],
+            topic=session["topic"],
+            level=session["level"],
+            time_spent=session["time_spent"]
+        )
+
+        db.add(new_session)
+        db.commit()
+        db.refresh(new_session)
+
+        return {"message": "Saved successfully"}
+
+    except Exception as e:
+        return {"error": str(e)}
 
 
 # @app.post("/students/")

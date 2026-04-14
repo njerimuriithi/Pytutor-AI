@@ -18,47 +18,16 @@ import {
   CTableHead,
   CTableHeaderCell,
   CTableRow,
-
 } from '@coreui/react'
-import { getStyle } from '@coreui/utils'
-import CIcon from '@coreui/icons-react'
-import { CChart } from '@coreui/react-chartjs'
-import {
-  cibCcAmex,
-  cibCcApplePay,
-  cibCcMastercard,
-  cibCcPaypal,
-  cibCcStripe,
-  cibCcVisa,
-  cibGoogle,
-  cibFacebook,
-  cibLinkedin,
-  cifBr,
-  cifEs,
-  cifFr,
-  cifIn,
-  cifPl,
-  cifUs,
-  cibTwitter,
-  cilCloudDownload,
-  cilPeople,
-  cilUser,
-  cilUserFemale,
-} from '@coreui/icons'
 
-import avatar1 from 'src/assets/images/avatars/1.jpg'
-import avatar2 from 'src/assets/images/avatars/2.jpg'
-import avatar3 from 'src/assets/images/avatars/3.jpg'
-import avatar4 from 'src/assets/images/avatars/4.jpg'
-import avatar5 from 'src/assets/images/avatars/5.jpg'
-import avatar6 from 'src/assets/images/avatars/6.jpg'
-
-import WidgetsBrand from '../widgets/WidgetsBrand'
 import WidgetsDropdown from '../widgets/WidgetsDropdown'
 import MainChart from './MainChart'
 import {fetchQuestion, fetchStudentsPerfomanceData, fetchTopicsData} from "src/api/axios_api";
+import StudentChart from "src/views/dashboard/StudentChart";
+import {useNavigate} from "react-router-dom";
 
 const Dashboard = () => {
+  const navigate = useNavigate();
   const chartRef = useRef(null)
   const [chartData, setChartData] = useState(null)
   const [studentPerformance, setStudentPerformance] = useState([])
@@ -114,6 +83,7 @@ const Dashboard = () => {
                     <CTableHeaderCell className="bg-body-tertiary">Questions Attempted</CTableHeaderCell>
                     <CTableHeaderCell className="bg-body-tertiary">Total Attempts</CTableHeaderCell>
                     <CTableHeaderCell className="bg-body-tertiary">Accuracy%</CTableHeaderCell>
+                    <CTableHeaderCell className="bg-body-tertiary">View Details</CTableHeaderCell>
                   </CTableRow>
                 </CTableHead>
                 <CTableBody>
@@ -157,6 +127,18 @@ const Dashboard = () => {
                       {/*  <div className="small text-body-secondary text-nowrap">Last login</div>
                         <div className="fw-semibold text-nowrap">{item.activity}</div>*/}
                       </CTableDataCell>
+                      <CTableDataCell className="text-center">
+                        <CButton
+                          size="sm"
+                          color="primary"
+                          variant="outline"
+                          onClick={() =>
+                            navigate(`/StudentChart/${item.studentId}`)
+                          }
+                        >
+                          View
+                        </CButton>
+                      </CTableDataCell>
                     </CTableRow>
                   ))}
                 </CTableBody>
@@ -165,6 +147,7 @@ const Dashboard = () => {
           </CCard>
         </CCol>
       </CRow>
+
     </>
   )
 }

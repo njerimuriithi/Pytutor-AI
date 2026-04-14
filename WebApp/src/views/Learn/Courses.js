@@ -3,7 +3,7 @@ import { CButton, CCard, CCardBody, CCardText, CCardTitle,CCardLink ,CListGroupI
   CModalHeader, CModalTitle, CModalBody, CModalFooter, CCarousel, CCarouselItem
 } from '@coreui/react'
 import {basicTopics, InterMediateTopics, advancedTopics, splitLesson} from "src/views/pages/register/Topics";
-import {fetchTopicToLearn} from "src/api/axios_api";
+import {fetchTopicToLearn,saveLearningSession} from "src/api/axios_api";
 import ReactMarkdown from "react-markdown";
 import {useNavigate} from "react-router-dom";
 const Courses = () => {
@@ -13,12 +13,14 @@ const Courses = () => {
   const [selectedLevel, setSelectedLevel] = useState('')
   const [lesson, setLesson] = useState("");
   const [loading, setLoading] = useState(false);
+  const [lessonStartTime, setLessonStartTime] = useState(null);
 
   const openLessonModal = async (topic, level) => {
     setModalVisible(true);
     setSelectedTopic(topic)
     setLoading(true);
     setSelectedLevel(level);
+    setLessonStartTime(new Date())
 
     try {
       const data = await fetchTopicToLearn(level, topic);
@@ -31,6 +33,30 @@ const Courses = () => {
     setLoading(false);
   };
   const sections = lesson.split("## ").filter(Boolean);
+
+  const handleCloseLesson = async () => {
+    setModalVisible(false);
+
+    if (!lessonStartTime) return;
+
+    const endTime = new Date();
+    const timeSpent = Math.floor((endTime - lessonStartTime) / 1000); // seconds
+
+    const payload = {
+      student_id: 4, // replace with logged-in user
+      topic: selectedTopic,
+      level: selectedLevel,
+      time_spent: timeSpent,
+    };
+
+    console.log("Learning session:", payload);
+
+    try {
+      await saveLearningSession(payload); // create this API
+    } catch (err) {
+      console.error("Error saving learning session", err);
+    }
+  };
 
 
   const renderTopicLinks = (topicsArray, level) => {
@@ -98,17 +124,8 @@ const Courses = () => {
             </CCarousel>
           )}
         </CModalBody>
-        {/*<CModalBody>
-          {sections.map((section, index) => (
-
-              <div style={{ padding: "15px" }}>
-                <ReactMarkdown>{section}</ReactMarkdown>
-              </div>
-
-          ))}
-        </CModalBody>*/}
         <CModalFooter>
-          <CButton color="secondary" onClick={() => setModalVisible(false)}>
+          <CButton color="secondary"  onClick={handleCloseLesson}>
             Close
           </CButton>
           <CButton color="primary"

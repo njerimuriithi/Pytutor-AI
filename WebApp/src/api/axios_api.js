@@ -10,7 +10,7 @@ export async function RegisterNewStudent(data = {}) {
 }
 
 
-export async function fetchQuestion(level, topics) {
+/*export async function fetchQuestion(level, topics) {
   try {
     const topicsArray = Array.isArray(topics) ? topics : [topics];
 
@@ -26,6 +26,34 @@ export async function fetchQuestion(level, topics) {
     return response.data;
   } catch (error) {
     console.error("Error fetching data:", error);
+    throw error;
+  }
+}*/
+export async function saveLearningSession(data) {
+  try {
+    const response = await axios.post(`${api_router}/learning-session`, data);
+    return response.data;
+  } catch (error) {
+    console.error("Error saving learning session:", error);
+    throw error;
+  }
+}
+export async function fetchQuestion(level, topics) {
+  try {
+    const topicsString = Array.isArray(topics)
+      ? topics.join(",")
+      : topics;
+
+    const response = await axios.get(`${api_router}/question`, {
+      params: {
+        level,
+        topics: topicsString,
+      },
+    });
+
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching questions:", error);
     throw error;
   }
 }
@@ -87,3 +115,14 @@ export async function fetchStudentsPerfomanceData() {
     throw error;
   }
 }
+
+export async function fetchIndividualStudentsData(studentId) {
+  try {
+    const response = await axios.get(`${api_router}/studentdashboard/4`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching indivual students data:", error);
+    throw error;
+  }
+}
+

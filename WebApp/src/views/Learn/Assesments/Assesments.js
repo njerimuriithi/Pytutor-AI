@@ -32,7 +32,7 @@ const Assesments = () => {
   const getTopicsByLevel = () => {
     switch (topicLevel) {
 
-      case 'basic':
+      case 'beginner':
         return basicTopics;
       case 'intermediate':
         return InterMediateTopics;
@@ -43,12 +43,12 @@ const Assesments = () => {
     }
   };
   const levelDescriptions = {
-    basic: "Test your understanding of Python basics and core concepts. Perfect for beginners.",
+    beginner: "Test your understanding of Python basics and core concepts. Perfect for beginners.",
     intermediate: "Enhance your skills with intermediate Python concepts and real-world examples.",
     advanced: "Challenge yourself with advanced Python topics like decorators and concurrency."
   };
   const levelTopics={
-    basic:"Introduction to Python",
+    beginner:"Introduction to Python",
     intermediate:"Intermediate Python",
     advanced:"Advanced Python"
   }
@@ -90,7 +90,7 @@ const Assesments = () => {
   }
   return(
     <CRow>
-      {['basic', 'intermediate', 'advanced'].map((level) => (
+      {['beginner', 'intermediate', 'advanced'].map((level) => (
       <CCol sm={4}>
         <CCard  style={{ width: '18rem' }}>
           <CCardBody>
