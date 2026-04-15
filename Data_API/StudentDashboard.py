@@ -22,7 +22,10 @@ def get_individual_student_details(studentid: int, db: Session = Depends(get_db)
             SELECT 
             CONCAT(S.first_name, ' ', S.second_name) AS Full_Name,
             S.student_level,
-            S.first_name,                             
+            S.first_name, 
+            S.registered_date, 
+
+
 
             
             STUFF((
@@ -70,6 +73,7 @@ def get_individual_student_details(studentid: int, db: Session = Depends(get_db)
                 S.student_id,
                 S.first_name,
                 S.second_name,
+                S.registered_date,
                 S.student_level;
                     """)
 
@@ -81,23 +85,23 @@ def get_individual_student_details(studentid: int, db: Session = Depends(get_db)
             FROM quiztopic QT
             INNER JOIN quizresults QR
                 ON QT.quiz_id = QR.quiz_id
-            WHERE QR.student_id = :studentid
+            WHERE QR.student_id =:studentid
             GROUP BY QT.topic
             ORDER BY Accuracy_Percent ASC;
         """)
         Best_performing_Topics = text("""
-                    SELECT TOP 5
+                    SELECT  
                         QT.topic,
                         AVG(QR.correct_answers * 1.0 / NULLIF(QR.answered_questions, 0)) * 100 AS Accuracy_Percent,
                         COUNT(*) AS Attempts
                     FROM quiztopic QT
                     INNER JOIN quizresults QR
                         ON QT.quiz_id = QR.quiz_id
-                    WHERE QR.student_id = :studentid
+                    WHERE QR.student_id =:studentid
                     GROUP BY QT.topic
                     ORDER BY Accuracy_Percent ASC;
-                    """
-                                      )
+                    """)
+
         Topics_Learned = text("""
                     SELECT 
                         topic,
@@ -117,7 +121,7 @@ def get_individual_student_details(studentid: int, db: Session = Depends(get_db)
 	                  100 AS progress_percent, 
                     1 AS completed
                     FROM learning_sessions LS
-                    WHERE LS.student_id = 4
+                    WHERE LS.student_id =:studentid
                     UNION ALL
 
                     SELECT 
@@ -133,7 +137,7 @@ def get_individual_student_details(studentid: int, db: Session = Depends(get_db)
                     FROM quizresults QR
                     INNER JOIN quiztopic QT 
                         ON QR.quiz_id = QT.quiz_id
-                    WHERE QR.student_id = :studentid
+                    WHERE QR.student_id =:studentid
                     ORDER BY created_at DESC;
             """)
 

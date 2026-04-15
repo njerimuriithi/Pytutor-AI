@@ -1,66 +1,22 @@
 import React,{useState,useEffect,useRef} from 'react'
-import classNames from 'classnames'
-
 import {
   CAvatar,
   CButton,
-  CButtonGroup,
   CCard,
   CCardBody,
   CCardTitle,
-  CCardFooter,
   CCardHeader,
   CCol,
   CProgress,
   CRow,
-  CCardLink,
-  CTable,
-  CTableBody,
-  CTableDataCell,
-  CTableHead,
-  CTableHeaderCell,
-  CTableRow,
-  CListGroup,
-  CListGroupItem, CCardText, CCardSubtitle,
+  CCardText,
   CSpinner,
-  CProgressBar
-
-
 } from '@coreui/react'
-import { getStyle } from '@coreui/utils'
+
 import {cilArrowThickRight,cilEducation,cilTerminal} from  '@coreui/icons'
-import { CChart } from '@coreui/react-chartjs'
-import {
-  cibCcAmex,
-  cibCcApplePay,
-  cibCcMastercard,
-  cibCcPaypal,
-  cibCcStripe,
-  cibCcVisa,
-  cibGoogle,
-  cibFacebook,
-  cibLinkedin,
-  cifBr,
-  cifEs,
-  cifFr,
-  cifIn,
-  cifPl,
-  cifUs,
-  cibTwitter,
-  cilCloudDownload,
-  cilPeople,
-  cilUser,
-  cilUserFemale,
-} from '@coreui/icons'
-
-
 import {
   fetchIndividualStudentsData,
-  fetchQuestion,
-  fetchStudentsPerfomanceData,
-  fetchTopicsData
 } from "src/api/axios_api";
-import Courses from "src/views/Learn/Courses";
 import CIcon from "@coreui/icons-react";
 
 const StudentDashboard = ({studentId}) => {
@@ -87,7 +43,6 @@ const StudentDashboard = ({studentId}) => {
   };
   const student =data?.student_details?.[0];
 
-  console.log(student);
   const initial = student?.Full_Name
     ? student.Full_Name.charAt(0).toUpperCase()
     : "?";
@@ -260,7 +215,7 @@ const StudentDashboard = ({studentId}) => {
 
             <CCardHeader as="h5">Recent Activity</CCardHeader>
             <CCardBody>
-              {data?.student_activity?.map((a, i) => {
+              {(data?.student_activity || []).slice(0, 6).map((a, i) => {
                 const percent = a.answered_questions
                   ? Math.round((a.correct_answers / a.answered_questions) * 100)
                   : 0;
