@@ -1,27 +1,18 @@
 import React,{useState} from 'react'
 import {
-  CContainer,
   CCard,
   CCardBody,
   CRow,
   CCol,
-  CCardGroup,
   CCardTitle,
   CCardText,
   CButton,
   CCardHeader,
-  CCardImage,
-  CAvatar,
-  CImage,
-  CChipInput
-
-
-
+  CFormCheck
 } from "@coreui/react";
-import reactimage from 'src/assets/images/avatars/AvatarPython.png'
-import avatar from 'src/assets/images/avatars/AvatarPython.png'
+
 import CIcon from "@coreui/icons-react";
-import {cilLockLocked,cilSortAscending} from "@coreui/icons";
+import {cilSortAscending} from "@coreui/icons";
 import {advancedTopics, basicTopics, InterMediateTopics} from "src/views/pages/register/Topics";
 import { useNavigate } from 'react-router-dom';
 const Assesments = () => {
@@ -31,7 +22,6 @@ const Assesments = () => {
   const [topicLevel, setTopicLevel] = useState(null);
   const getTopicsByLevel = () => {
     switch (topicLevel) {
-
       case 'beginner':
         return basicTopics;
       case 'intermediate':
@@ -58,83 +48,102 @@ const Assesments = () => {
   const handleLevelSelect = (level) => {
     console.log(level)
     setTopicLevel(level);
-    setSelected([]); // reset previous selection
+    setSelected([]);
   };
   if (topicLevel) {
     return (
-      <CCard className="w-50 mb-3">
+      <CCard className="w-75 mb-4 shadow-sm">
         <CCardBody>
-          <CChipInput
-            defaultValue={getTopicsByLevel()}
-            selectable
-            onSelect={setSelected}
-            placeholder="Select chips"
-          />
-          <p className="mt-2 mb-0 small text-body-secondary">
-            Selected: {selected.length ? selected.join(', ') : 'None'}
-          </p>
 
-          <CButton color="primary"
-                   onClick={() => {
-                     // Navigate to questions page
-                     navigate('/Learn/Assesments/Questions', {
-                       state: { level: topicLevel, topics: selected }
-                     });
-                   }}
-          >
-            Start Quiz
-          </CButton>
+          {/* TITLE */}
+          <div className="mb-3">
+            <h5 className="mb-1">Choose a Topic</h5>
+            <small className="text-body-secondary">
+              Test Your Understanding
+            </small>
+          </div>
+
+          {/* RADIO LIST */}
+          <CRow className="mb-3">
+            {getTopicsByLevel().map((topic, index) => (
+              <CCol md={6} key={index} className="mb-2">
+                <div
+                  className={`border rounded p-2 d-flex align-items-center
+                ${selected === topic ? "bg-light border-primary" : ""}`}
+                >
+                  <CFormCheck
+                    type="radio"
+                    name="topic"
+                    id={`topic-${index}`}
+                    label={topic}
+                    checked={selected === topic}
+                    onChange={() => setSelected(topic)}
+                  />
+                </div>
+              </CCol>
+            ))}
+          </CRow>
+          <div className="mb-3">
+            <small className="text-body-secondary">
+              Selected:{" "}
+              <strong>{selected || "None"}</strong>
+            </small>
+          </div>
+          <div className="d-flex justify-content-between align-items-center mt-3">
+            <CButton
+              color="danger"
+              onClick={() => navigate(0)}
+            >
+              Cancel
+            </CButton>
+
+
+            <CButton
+              color="success"
+              disabled={!selected}
+              onClick={() => {
+                navigate('/Learn/Assesments/Questions', {
+                  state: { level: topicLevel, topics: [selected] }
+                })
+              }}
+            >
+              Continue
+            </CButton>
+
+          </div>
+
         </CCardBody>
       </CCard>
-    );
+    )
   }
+
   return(
-    <CRow>
-      {['beginner', 'intermediate', 'advanced'].map((level) => (
-      <CCol sm={4}>
-        <CCard  style={{ width: '18rem' }}>
-          <CCardBody>
-            <CCardHeader className="mb-3" as="h5" >{levelTopics[level]}</CCardHeader>
-            <CCardTitle className="mb-2 text-body-secondary">
-              <CIcon icon={cilSortAscending} size="xl"  style={{'--ci-primary-color': 'green'}}/>
-              {level}
-            </CCardTitle>
+    <>
+
+      <CRow>
+        {['beginner', 'intermediate', 'advanced'].map((level) => (
+
+            <CCard className="mb-3 w-75" >
+              <CCardBody>
+                <CCardHeader className="mb-3" as="h5" >{levelTopics[level]}</CCardHeader>
+                <CCardTitle>
+                  <CIcon icon={cilSortAscending} size="xl"  style={{'--ci-primary-color': 'green'}}/>
+                  {level}</CCardTitle>
+                <CCardText>
+                  {levelDescriptions[level]}
+                </CCardText>
+                <CButton color="success" onClick={() => handleLevelSelect(level)}>Select Topic</CButton>
+              </CCardBody>
+            </CCard>
+
+        ))}
 
 
-            <CCardText>
-              {levelDescriptions[level]}
+      </CRow>
 
-            </CCardText>
-            <CButton color="success" onClick={() => handleLevelSelect(level)}>Select Topics</CButton>
-          </CCardBody>
-        </CCard>
-      </CCol>
-      ))}
+    </>
 
 
-    </CRow>
- /* <div className="text-center" >
-
-        <CCard className="w-50 mb-3 text-center ">
-          <CCardBody>Attempt 10 questions</CCardBody>
-        </CCard>
-        <CCard className="w-50 text-center">
-          <CCardBody>
-            <CCardHeader>TEST YOUR SKILLS</CCardHeader>
-            <CCardTitle>Python Programming</CCardTitle>
-            <CImage   align="center" src={reactimage}  width={200} height={200}/>
-
-            <CCardText>
-                 This assesment will test your understanding of Python programming
-              concepts. It is designed to evaluate your ability to apply Python knowledge to solve problems and write efficient code.
-            </CCardText>
-            <CButton color="success" href="#">Start Assesment</CButton>
-          </CCardBody>
-        </CCard>
-
-
-    </div>
-*/
   )
 }
 export  default Assesments;

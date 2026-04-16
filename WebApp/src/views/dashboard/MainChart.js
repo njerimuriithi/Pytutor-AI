@@ -29,30 +29,25 @@ const MainChart = () => {
   const [chartData, setChartData] = useState(null)
   const [allTopics, setAllTopics] = useState([]) // store all fetched topics
   const [activeLevel, setActiveLevel] = useState(null)
+  const [difficultChart, setDifficultChart] = useState(null)
+  const [allDifficultTopics, setAllDifficultTopics] = useState([])
   const [availableLevels, setAvailableLevels] = useState([])
   useEffect(() => {
     const loadData = async () => {
       try {
         const res = await fetchTopicsData()
+
         setAllTopics(res.students_per_topic)
-        const levels = Array.from(new Set(res.students_per_topic.map(t => t.level)))
+
+        const levels = Array.from(
+          new Set(res.students_per_topic.map(t => t.level))
+        )
+
         setAvailableLevels(levels)
         if (levels.length > 0) setActiveLevel(levels[0])
-       // const labels = res.students_per_topic.map(item => item.topic)
-       // const values = res.students_per_topic.map(item => item.count)
 
-       /* setChartData({
-          labels,
-          datasets: [
-            {
-              label: 'Students per Topic',
-              backgroundColor: '#4f9cf9',
-              borderColor: '#4f9cf9',
-              data: values,
-            },
-          ],
-        })*/
-
+        // NEW: Difficult topics chart
+        setAllDifficultTopics(res.difficult_topics || [])
       } catch (err) {
         console.error(err)
       }
@@ -63,23 +58,43 @@ const MainChart = () => {
 
   useEffect(() => {
     if (!activeLevel) return
-    // Filter topics based on selected level
+
     const filtered = allTopics.filter(t => t.level === activeLevel)
-    const labels = filtered.map(t => t.topic)
-    const values = filtered.map(t => t.count)
 
     setChartData({
-      labels,
+      labels: filtered.map(t => t.topic),
       datasets: [
         {
           label: 'Students per Topic',
           backgroundColor: '#4f9cf9',
-          borderColor: '#4f9cf9',
-          data: values,
+          data: filtered.map(t => t.count),
         },
       ],
     })
   }, [activeLevel, allTopics])
+  useEffect(() => {
+    if (!activeLevel) return
+
+    const filtered = allDifficultTopics.filter(
+      t => t.level === activeLevel
+    )
+
+    setDifficultChart({
+      labels: filtered.map(t => t.topic),
+      datasets: [
+        {
+          label: 'Difficulty Score',
+          data: filtered.map(t => t.difficulty_score),
+          backgroundColor: filtered.map(() => colors[activeLevel] || '#3498db')
+        },
+      ],
+    })
+  }, [activeLevel, allDifficultTopics])
+  const colors = {
+    beginner: '#2ecc71',
+    intermediate: '#f39c12',
+    advanced: '#e74c3c',
+  }
   useEffect(() => {
     const handleColorSchemeChange = () => {
       const chartInstance = chartRef.current
@@ -124,48 +139,64 @@ const MainChart = () => {
   }
   return (
     <>
-      <CCardBody>
-        <CRow>
-          <CCol sm={5}>
-            <h4 id="traffic" className="card-title mb-0">
-              Traffic
-            </h4>
-            <div className="small text-body-secondary">January - July 2023</div>
-          </CCol>
-          <CCol sm={7} className="d-none d-md-block">
-            <CButtonGroup className="mb-3">
-              {availableLevels.map(level => (
-                <CButton
-                  key={level}
-                  color={activeLevel === level ? 'primary' : 'outline-secondary'}
-                  onClick={() => setActiveLevel(level)}
-                >
-                  {level}
-                </CButton>
-              ))}
-            </CButtonGroup>
+      <div className="text-center mb-3">
+        <h5>{activeLevel} Students Overview</h5>
 
-            {/*<CButtonGroup className="float-end me-1">
-              {['Beginner', 'Intermediate', 'Advanced'].map((value) => (
-                <CButton
-                  color="outline-secondary"
-                  key={value}
-                  className="mx-0"
-                  active={value === 'Month'}
-                >
-                  {value}
-                </CButton>
-              ))}
-            </CButtonGroup>*/}
-          </CCol>
-        </CRow>
-        {chartData && chartData.labels.length > 0 ? (
-          <CChart type="bar" data={chartData} options={options} ref={chartRef} />
-        ) : (
-          <p>No data to display for this level.</p>
-        )}
-      </CCardBody>
+        <CButtonGroup className="mb-3">
+          {availableLevels.map(level => (
+            <CButton
+              key={level}
+              color={activeLevel === level ? 'primary' : 'light'}
+              onClick={() => setActiveLevel(level)}
+            >
+              {level}
+            </CButton>
+          ))}
+        </CButtonGroup>
+      </div>
 
+      <CRow>
+        {/* LEFT: Bar Chart */}
+        <CCol md={8}>
+          <CCard className="mb-4">
+            <CCardBody>
+              <h6 className="mb-3">Students per Topic</h6>
+
+              {chartData ? (
+                <CChart type="bar" data={chartData} options={options} />
+              ) : (
+                <p>No data available</p>
+              )}
+            </CCardBody>
+          </CCard>
+        </CCol>
+
+        {/* RIGHT: DONUT CHART */}
+        <CCol md={4}>
+          <CCard className="mb-4">
+            <CCardBody>
+              <h6 className="mb-3">Most Difficult Topics</h6>
+
+              {difficultChart ? (
+                <CChart
+                  type="doughnut"
+                  data={difficultChart}
+                  options={{
+                    plugins: {
+                      legend: {
+                        position: 'bottom',
+                      },
+                    },
+                    cutout: '65%',
+                  }}
+                />
+              ) : (
+                <p>No difficulty data</p>
+              )}
+            </CCardBody>
+          </CCard>
+        </CCol>
+      </CRow>
     </>
   )
 }

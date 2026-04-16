@@ -96,6 +96,16 @@ export async function fetchStudentsData() {
   }
 }
 
+export async function Fetchallstudentsdata() {
+  try {
+    const response = await axios.get(`${api_router}/dashboard/allstudentsdata`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching dashboard students:", error);
+    throw error;
+  }
+}
+
 export async function fetchTopicsData() {
   try {
     const response = await axios.get(`${api_router}/dashboard/topics`);

@@ -169,56 +169,91 @@ def get_lesson(level: Optional[str] = "beginner",
 def get_question(level: Optional[str] = "beginner",
                  topics: Optional[str] = "all"):
     try:
-        # Ensure topics is a string
-        topics_str = topics if isinstance(topics, str) else ",".join(topics)
+        # Ensure topics is string
+        topics_list = [
+            t.strip()
+            for t in topics.split(",")
+            if t and t.strip()
+        ]
+        topics_str = ", ".join(topics_list)
         print(f"Topics received: {topics_str}, Level: {level}")
 
-        # Format system prompt safely
+        # Prepare system prompt
         try:
             system_prompt = SYSTEM_PROMPT_TEMPLATE.format(
-                level=level, topics=topics_str)
+                level=level,
+                topics=topics_str
+            )
         except Exception as e:
-            print(f"Error formatting system prompt: {e}")
-            return {"error": f"Error formatting system prompt: {e}"}
+            return {"error": f"Prompt formatting failed: {str(e)}"}
 
-        print(f"System prompt prepared:\n{system_prompt}")
-
-        # Prepare messages
+        # Messages
         messages = [
             {"role": "system", "content": system_prompt},
-            {"role": "user", "content": f"Generate a {level} Python assessment for these topics: {topics_str}"}
+            {
+                "role": "user",
+                "content": f"Generate a {level} Python assessment for these topics: {topics_str}"
+            }
         ]
 
-        # Call model
+        # ---- FIRST ATTEMPT ----
+        raw = generate_with_retry(messages)
+        print("Raw model output:", raw)
+
+        if not raw or not raw.strip():
+            return {"error": "Empty response from model"}
+
+        try:
+            parsed = extract_json(raw)
+            return parsed
+        except Exception as e:
+            print("First parse failed:", e)
+
+        # ---- RETRY WITH STRICT INSTRUCTION ----
+        messages.append({
+            "role": "user",
+            "content": "Return ONLY valid JSON. No truncation. No explanation."
+        })
+
+        try:
+            raw_retry = generate_with_retry(messages, retries=1)
+            print("Retry output:", raw_retry)
+
+            parsed_retry = extract_json(raw_retry)
+            return parsed_retry
+
+        except Exception as e2:
+            print("Retry failed:", e2)
+            return {
+                "error": "Failed to parse JSON after retry",
+                "raw": raw
+            }
+
+    except Exception as e:
+        print("Unexpected error:", e)
+        return {"error": str(e)}
+
+
+def generate_with_retry(messages, retries=2):
+    for attempt in range(retries):
         try:
             completion = client.chat.completions.create(
                 model="openai/gpt-oss-20b",
                 messages=messages,
                 temperature=0.3
             )
+
+            raw = completion.choices[0].message.content
+
+            if not raw.strip():
+                raise Exception("Empty response")
+
+            return raw
+
         except Exception as e:
-            print(f"Error calling model: {e}")
-            return {"error": f"Error calling model: {e}"}
+            print(f"Attempt {attempt + 1} failed: {e}")
 
-        raw = completion.choices[0].message.content
-        print(f"Raw model output:\n{raw}")
-
-        if not raw.strip():
-            return {"error": "Model returned empty response"}
-
-        # Fix JSON safely
-        try:
-            parsed = fix_json(raw)
-        except Exception as e:
-            print(f"Error parsing JSON: {e}")
-            return {"error": f"Error parsing JSON: {e}", "raw": raw}
-
-        return parsed
-
-    except Exception as e:
-        print(f"Unexpected error: {e}")
-        return {"error": f"Unexpected error: {e}"}
-
+    raise Exception("All retries failed")
 
 # def Test_db():
 #     db = SessionLocal()
@@ -377,6 +412,13 @@ def fix_json(raw):
         raw += "]" * (raw.count("[") - raw.count("]"))
 
     return json.loads(raw)
+
+
+def extract_json(text):
+    start = text.find("{")
+    end = text.rfind("}") + 1
+    json_str = text[start:end]
+    return json.loads(json_str)
 
 
 @app.post("/answer")

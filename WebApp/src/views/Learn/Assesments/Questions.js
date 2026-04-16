@@ -24,6 +24,8 @@ const Questions = () => {
       setLoading(true);
       const response = await fetchQuestion(level, topics);
       setData(response);
+      setStartTime(new Date());
+
     } catch (error) {
       console.error(error);
     } finally {
@@ -40,10 +42,10 @@ const Questions = () => {
 
   if (loading) {
     return (
-      <div className="d-flex">
-        <CSpinner color="success" variant="grow"/>
+      <div className="d-flex justify-content-center align-items-center" style={{ height: "200px" }}>
+        <CSpinner color="success" variant="grow" />
       </div>
-    )
+    );
   }
 
   const handleNext = () => {
