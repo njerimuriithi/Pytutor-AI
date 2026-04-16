@@ -26,6 +26,202 @@ def get_db():
         db.close()
 
 
+@router.get("/dashboard/allstudentsdata")
+def get_inactive_students(db: Session = Depends(get_db)):
+    try:
+        query = text("""
+            SELECT
+                  S.student_id,
+                  CONCAT(S.first_name,' ',S.second_name) AS full_name,
+                  MAX(QR.created_at) AS last_activity,
+                  DATEDIFF(DAY, MAX(QR.created_at), GETDATE()) AS days_inactive
+            FROM student S
+            LEFT JOIN quizresults QR 
+                ON QR.student_id = S.student_id
+            GROUP BY 
+                S.student_id, 
+                S.first_name, 
+                S.second_name
+            HAVING 
+                MAX(QR.created_at) < DATEADD(DAY, -7, GETDATE())
+                OR MAX(QR.created_at) IS NULL
+            ORDER BY last_activity ASC
+        """)
+        activity_trend_query = text("""
+                        SELECT
+                            CAST(created_at AS DATE) AS activity_date,
+                            SUM(time_spent) AS total_time_spent
+                        FROM (
+                            SELECT created_at, time_spent FROM quizresults
+                            UNION ALL
+                            SELECT created_at, time_spent FROM learning_sessions
+                        ) AS activity
+                        GROUP BY CAST(created_at AS DATE)
+                        ORDER BY activity_date;
+                        """)
+
+        improved_student_query = text("""
+                            WITH Ranked AS (
+                                SELECT
+                                    QR.student_id,
+                                    QR.correct_answers * 1.0 / NULLIF(QR.answered_questions, 0) AS score,
+                                    QR.created_at,
+                                    S.student_level,
+                                    ROW_NUMBER() OVER (PARTITION BY QR.student_id ORDER BY QR.created_at ASC) AS rn_asc,
+                                    ROW_NUMBER() OVER (PARTITION BY QR.student_id ORDER BY QR.created_at DESC) AS rn_desc
+                                FROM quizresults QR
+                                INNER JOIN student S ON S.student_id = QR.student_id   
+                            ),
+
+                            FirstLast AS (
+                                SELECT
+                                    student_id,
+                                    MAX(CASE WHEN rn_asc = 1 THEN score END) AS first_score,
+                                    MAX(CASE WHEN rn_desc = 1 THEN score END) AS last_score
+                                FROM Ranked
+                                GROUP BY student_id
+                            )
+
+                            SELECT TOP 1
+                                S.student_id,
+                                CONCAT(S.first_name,' ',S.second_name) AS full_name,
+                                (last_score - first_score) * 100 AS improvement
+                            FROM FirstLast F
+                            INNER JOIN student S ON S.student_id = F.student_id
+                            ORDER BY improvement DESC;
+            """)
+
+        student_activity_query = text("""
+                    WITH Activity AS (
+                        SELECT 
+                            student_id,
+                            answered_questions,
+                            correct_answers,
+                            total_questions,
+                            time_spent,
+                            created_at,
+                            completed
+                        FROM quizresults
+                    ),
+
+                    TopicAgg AS (
+                        SELECT
+                            QR.student_id,
+                            QT.topic,
+                            AVG(QR.correct_answers * 1.0 / NULLIF(QR.answered_questions, 0)) * 100 AS accuracy,
+                            COUNT(*) AS attempts
+                        FROM quizresults QR
+                        INNER JOIN quiztopic QT ON QT.quiz_id = QR.quiz_id
+                        GROUP BY QR.student_id, QT.topic
+                    ),
+
+                    StudentBase AS (
+                        SELECT 
+                            S.student_id,
+                            CONCAT(S.first_name, ' ', S.second_name) AS FullName,
+                            S.student_level
+                        FROM student S
+                    )
+
+                    SELECT 
+                        S.student_id,
+                        S.FullName,
+                        S.student_level,
+
+                        -- PERFORMANCE METRICS
+                        COUNT(ACT.created_at) AS total_assessments,
+
+                        SUM(ACT.time_spent) AS total_time_spent,
+
+                        CAST(
+                            AVG(
+                                CASE 
+                                    WHEN ACT.answered_questions = 0 THEN 0
+                                    ELSE (ACT.correct_answers * 100.0 / ACT.answered_questions)
+                                END
+                            ) AS DECIMAL(5,2)
+                        ) AS accuracy_percent,
+
+                        CAST(
+                            AVG(
+                                CASE WHEN ACT.completed = 1 THEN 100 ELSE 0 END
+                            ) AS DECIMAL(5,2)
+                        ) AS completion_percent,
+
+                        MAX(ACT.created_at) AS last_activity,
+
+                        -- MOST ACTIVE TOPIC
+                        (
+                            SELECT TOP 1 TA.topic
+                            FROM TopicAgg TA
+                            WHERE TA.student_id = S.student_id
+                            ORDER BY TA.attempts DESC
+                        ) AS most_attempted_topic,
+
+                        -- WEAK TOPICS (TOP 3)
+                        (
+                            SELECT STRING_AGG(topic, ', ')
+                            FROM (
+                                SELECT TOP 3 TA.topic
+                                FROM TopicAgg TA
+                                WHERE TA.student_id = S.student_id
+                                ORDER BY TA.accuracy ASC
+                            ) X
+                        ) AS weak_topics,
+
+                        -- STRONG TOPICS (TOP 3)
+                        (
+                            SELECT STRING_AGG(topic, ', ')
+                            FROM (
+                                SELECT TOP 3 TA.topic
+                                FROM TopicAgg TA
+                                WHERE TA.student_id = S.student_id
+                                ORDER BY TA.accuracy DESC
+                            ) Y
+                        ) AS strong_topics,
+
+                        -- STATUS 
+                        CASE
+                            WHEN AVG(
+                                CASE WHEN ACT.answered_questions = 0 THEN 0
+                                ELSE (ACT.correct_answers * 100.0 / ACT.answered_questions)
+                                END
+                            ) < 50 THEN 'At Risk'
+
+                            WHEN AVG(
+                                CASE WHEN ACT.answered_questions = 0 THEN 0
+                                ELSE (ACT.correct_answers * 100.0 / ACT.answered_questions)
+                                END
+                            ) < 75 THEN 'Needs Attention'
+
+                            ELSE 'No Progress'
+                        END AS performance_status
+
+                    FROM StudentBase S
+                    LEFT JOIN Activity ACT ON ACT.student_id = S.student_id
+
+                    GROUP BY 
+                        S.student_id,
+                        S.FullName,
+                        S.student_level
+                    ORDER BY last_activity DESC;""")
+
+        result = db.execute(query).fetchall()
+        improved_student_result = db.execute(improved_student_query).fetchall()
+        student_activity_result = db.execute(student_activity_query).fetchall()
+        activity_trend_result = db.execute(activity_trend_query).fetchall()
+
+        return {
+            "inactive_students": [dict(row._mapping) for row in result],
+            "improved_student": [dict(row._mapping) for row in improved_student_result],
+            "student_activity": [dict(row._mapping) for row in student_activity_result],
+            "activity_trend": [dict(row._mapping) for row in activity_trend_result]
+        }
+
+    except Exception as e:
+        return {"error": str(e)}
+
+
 @router.get("/dashboard/students")
 def get_student_stats(db: Session = Depends(get_db)):
     try:
@@ -72,9 +268,41 @@ def get_topics_stats(db: Session = Depends(get_db)):
             GROUP BY quiztopic.topic, quiztopic.level
             ORDER BY NumberOfStudentsPerTopic DESC;
         """)
+        difficult_topics_query = text("""
+                SELECT
+                    QT.topic,
+                    QT.level,
+                    COUNT(*) AS total_attempts,
+
+                    SUM(QR.answered_questions) AS total_answered,
+                    SUM(QR.correct_answers) AS total_correct,
+
+                    CAST(
+                        SUM(QR.correct_answers) * 100.0 /
+                        NULLIF(SUM(QR.answered_questions), 0)
+                    AS DECIMAL(5,2)) AS accuracy_percent,
+
+                    CAST(
+                        100 - (
+                            SUM(QR.correct_answers) * 100.0 /
+                            NULLIF(SUM(QR.answered_questions), 0)
+                        )
+                    AS DECIMAL(5,2)) AS difficulty_score
+
+                FROM quizresults QR
+                INNER JOIN quiztopic QT
+                    ON QR.quiz_id = QT.quiz_id
+
+                GROUP BY
+                    QT.topic,
+                    QT.level
+
+                ORDER BY difficulty_score DESC;
+                """)
 
         students_per_topic = db.execute(
             Number_Of_Students_Per_Topic).fetchall()
+        difficult_topics_result = db.execute(difficult_topics_query).fetchall()
 
         return {
 
@@ -85,7 +313,9 @@ def get_topics_stats(db: Session = Depends(get_db)):
                     "level": row.level
                 }
                 for row in students_per_topic
-            ]
+
+            ],
+            "difficult_topics": [dict(row._mapping) for row in difficult_topics_result]
         }
 
     except Exception as e:
@@ -122,6 +352,7 @@ def get_studenttopics_stats(db: Session = Depends(get_db)):
 
                 }
                 for row in students_per_topic_details
+
             ]
         }
 
@@ -136,9 +367,7 @@ def get_student_data(db: Session = Depends(get_db)):
             SELECT 
             CONCAT(S.first_name, ' ', S.second_name) AS Full_Name,
             S.student_level,
-            S.student_id,
-                                
-
+            S.student_id,                               
    
             STUFF((
                 SELECT DISTINCT ', ' + QT2.topic

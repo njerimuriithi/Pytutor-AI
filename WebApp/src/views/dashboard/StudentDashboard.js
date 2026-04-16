@@ -41,6 +41,7 @@ const StudentDashboard = ({studentId}) => {
       setLoading(false);
     }
   };
+
   const student =data?.student_details?.[0];
 
   const initial = student?.Full_Name
@@ -84,7 +85,7 @@ const StudentDashboard = ({studentId}) => {
 
           <CRow className="g-3" >
             {data?.poor_performing_topics?.length > 0 ? (
-              data.poor_performing_topics.slice(0, 6).map((topic, index) => (
+              data.poor_performing_topics.slice(0, 3).map((topic, index) => (
 
                 <CCol sm={4} key={index}>
                   <CCard textBgColor='light'
