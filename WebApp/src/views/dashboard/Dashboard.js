@@ -20,12 +20,14 @@ import {
   CTableRow,
 } from '@coreui/react'
 
-import WidgetsDropdown from '../widgets/WidgetsDropdown'
+
 import MainChart from './MainChart'
 import {Fetchallstudentsdata, fetchQuestion, fetchStudentsPerfomanceData, fetchTopicsData} from "src/api/axios_api";
 import StudentChart from "src/views/dashboard/StudentChart";
 import {useNavigate} from "react-router-dom";
 import {CChart} from "@coreui/react-chartjs";
+import CIcon from "@coreui/icons-react";
+import {cilUser, cilUserX} from "@coreui/icons";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -50,92 +52,99 @@ const Dashboard = () => {
     loadData()
   }, [])
 
-  const getPercentage = (score, questions) => {
-    if (!questions) return 0
-    return ((score / questions) * 100).toFixed(0)
-  }
-  const improvedstudent =data?.inactive_students?.[0]
 
-
-  console.log(data?.activity_trend
-  )
-  const TrendData = {
+   const TrendData = {
     labels: data?.activity_trend?.map(d => d.activity_date
     ),
     datasets: [
       {
         label: 'Active Time (Minutes)',
         data: data?.activity_trend?.map(d => d.total_time_spent),
-        borderColor: '#3498db',
-        backgroundColor: 'rgba(52,152,219,0.2)',
-        tension: 0.4,
+        borderColor: '#6aa84f',
+        backgroundColor: '#6aa84f',
+        tension: 0.5,
         fill: true,
       },
     ],
   }
-
-  const getAccuracy = (a) => {
-    if (!a.answered_questions) return 0
-    return Math.round((a.correct_answers / a.answered_questions) * 100)
-  }
-
-  const getStatus = (a) => {
-    const accuracy = getAccuracy(a)
-
-    if (a.completed && accuracy >= 75) return 'Strong'
-    if (a.completed && accuracy >= 50) return 'Average'
-    if (a.completed) return 'Weak'
-    return 'In Progress'
-  }
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'Strong':
-        return 'success'
-      case 'Average':
-        return 'warning'
-      case 'Weak':
-        return 'danger'
-      default:
-        return 'secondary'
-    }
-  }
-
   return (
     <>
-      <CRow className="mb-4">
-        <CCol sm={4}>
-          <CCard className="text-center p-3">
+      <CRow className="mb-4 g-3">
+        {/* TOTAL STUDENTS */}
+        <CCol sm={6}>
+          <CCard className="p-3 shadow-sm border-0">
+            <CCardBody className="d-flex align-items-center justify-content-between">
+              <div>
+                <small className="text-body-secondary">Total Students</small>
+                <h3 className="fw-bold mb-0">
+                  {data?.student_activity?.length || 0}
+                </h3>
+              </div>
+              <div
+                className="d-flex align-items-center justify-content-center rounded"
+                style={{
+                  width: "50px",
+                  height: "50px",
+                  background: "rgba(255, 193, 7, 0.15)" // soft warning bg
+                }}
+              >
+                <CIcon icon={cilUser} className="text-warning" size="lg" />
+              </div>
 
-            <h4 className="text-warning">{data?.student_activity?.length}</h4>
-            <h6>Total Students</h6>
+            </CCardBody>
           </CCard>
         </CCol>
-        <CCol sm={4}>
-          <CCard className="text-center p-3">
 
-            <h4 className="text-danger">{data?.inactive_students?.length}</h4>
-            <h6>Inactive Students</h6>
+        <CCol sm={6}>
+          <CCard className="p-3 shadow-sm border-0">
+            <CCardBody className="d-flex align-items-center justify-content-between">
+
+
+              <div>
+                <small className="text-body-secondary">Inactive Students</small>
+                <h3 className="fw-bold mb-0">
+                  {data?.inactive_students?.length || 0}
+                </h3>
+              </div>
+
+
+              <div
+                className="d-flex align-items-center justify-content-center rounded"
+                style={{
+                  width: "50px",
+                  height: "50px",
+                  background: "rgba(220, 53, 69, 0.15)" // soft danger bg
+                }}
+              >
+                <CIcon icon={cilUserX} className="text-danger" size="lg" />
+              </div>
+
+            </CCardBody>
           </CCard>
         </CCol>
-
-        {/* 🚀 Most Improved Student */}
-        <CCol sm={4}>
-          <CCard className="text-center p-3">
-
-            <h4 className="text-success"> {improvedstudent?.full_name}</h4>
-            <h6>Most Improved Student</h6>
-           {/* <small>+{improvedStudent?.improvement?.toFixed(1)}%</small>*/}
-          </CCard>
-        </CCol>
-
-
       </CRow>
+
         {/*Student analyrtics*/}
         <CRow>
+
           <CCol sm={6}>
-            <CCard className="mb-4 ">
-              <CCardHeader>Students Not Active (7+ Days)</CCardHeader>
+            <CCard className="mb-4 shadow-sm border-0" >
+              <CCardHeader as="h5">
+                📊 Student Active Time
+              </CCardHeader>
+
+              <CCardBody>
+                <CChart
+                  type="line"
+                  data={TrendData}
+                />
+              </CCardBody>
+            </CCard>
+
+          </CCol>
+          <CCol sm={6}>
+            <CCard className="mb-4 shadow-sm border-0">
+              <CCardHeader as="h5">Students Not Active (7+ Days)</CCardHeader>
 
               <CTable hover responsive>
                 <CTableHead>
@@ -153,7 +162,9 @@ const Dashboard = () => {
                       <CTableDataCell>{s.full_name}</CTableDataCell>
 
                       <CTableDataCell>
-                        {new Date(s.last_activity).toLocaleDateString()}
+                        {s.last_activity? new Date(s.last_activity).toLocaleString()
+                        : 'N/A'}
+                        {/*{new Date(s.last_activity).toLocaleDateString()}*/}
                       </CTableDataCell>
 
                       <CTableDataCell>
@@ -167,45 +178,20 @@ const Dashboard = () => {
               </CTable>
             </CCard>
           </CCol>
-          <CCol sm={6}>
-            <CCard className="mb-4">
-              <CCardHeader>
-                📊 Student Active Time Trend
-              </CCardHeader>
-
-              <CCardBody>
-                <CChart
-                  type="line"
-                  data={TrendData}
-                />
-              </CCardBody>
-            </CCard>
-
-          </CCol>
         </CRow>
-
-
-      {/*<WidgetsDropdown className="mb-4" />*/}
-
-
       <div className="mb-4">
        <MainChart/>
-
       </div>
-
-
-
-
       <CRow>
         <CCol xs>
           <CCard className="mb-4">
-            <CCardHeader>Students Performance</CCardHeader>
+            <CCardHeader as="h5">Students Details</CCardHeader>
             <CCardBody>
              <CTable align="middle" className="mb-0 border" hover responsive>
                 <CTableHead className="text-nowrap">
 
                   <CTableRow>
-                     <CTableHeaderCell className="bg-body-tertiary">Student Name
+                      <CTableHeaderCell className="bg-body-tertiary">Student Name
                      </CTableHeaderCell>
                     <CTableHeaderCell className="bg-body-tertiary text-center">
                       Registered Level
@@ -225,8 +211,6 @@ const Dashboard = () => {
                 <CTableBody>
                   {data?.student_activity?.map((s, i) => (
                     <CTableRow key={i}>
-
-                      {/* 👤 Student */}
                       <CTableDataCell>
                         <div className="d-flex align-items-center gap-2">
                           <CAvatar color="primary">
@@ -242,23 +226,14 @@ const Dashboard = () => {
                           </div>
                         </div>
                       </CTableDataCell>
-
-                      {/* 📊 Level */}
                       <CTableDataCell>{s.student_level}</CTableDataCell>
-
-                      {/* 📈 Accuracy */}
-                      <CTableDataCell>
-                       {/* <CProgress value={s.accuracy} color={status} />*/}
+                       <CTableDataCell>
                         <small>{s.accuracy_percent}%</small>
                       </CTableDataCell>
-
-                      {/* ✅ Completion */}
                       <CTableDataCell>
                         <CProgress value={s.completion_percent} color="info" />
                         <small>{s.completion_percent}%</small>
                       </CTableDataCell>
-
-                      {/* 📚 Weak Topics */}
                       <CTableDataCell>
                         {(s.weak_topics || "")
                           .split(",")
@@ -270,8 +245,6 @@ const Dashboard = () => {
                             </CBadge>
                           ))}
                       </CTableDataCell>
-
-                      {/* 📝 Assessments */}
                       <CTableDataCell>
                         <strong>{s.total_assessments}</strong>
                       </CTableDataCell>
@@ -287,13 +260,9 @@ const Dashboard = () => {
                             </CBadge>
                           ))}
                       </CTableDataCell>
-
-                      {/* ⏱ Time */}
                       <CTableDataCell>
                         {s.total_time_spent} min
                       </CTableDataCell>
-
-                      {/* 🚨 Status */}
                       <CTableDataCell>
                         {s.performance_status === 'At Risk' && (
                           <CBadge color="warning">At Risk</CBadge>
@@ -306,70 +275,20 @@ const Dashboard = () => {
                         {s.performance_status === 'No Progress' && (
                           <CBadge color="danger">No Progress</CBadge>
                         )}
+                        {s.performance_status === 'Great Student' && (
+                          <CBadge color="success">Great Student</CBadge>
+                        )}
                       </CTableDataCell>
-
-                      {/* 🎯 Action */}
                       <CTableDataCell>
-                        <CButton size="sm" color="primary"  onClick={() =>
-                          navigate(`/StudentChart/${s.studentId}`)
+                        <CButton size="sm" color="primary"
+                         disabled={s.performance_status === 'No Progress'}
+                         onClick={() =>
+                          navigate(`/StudentChart/${s.student_id}`)
                         }>
                           View
                         </CButton>
                       </CTableDataCell>
-
                     </CTableRow>
-                    /*<CTableRow v-for="item in tableItems" key={index}>
-
-                      <CTableDataCell>
-                        <div>{item.FullName}</div>
-                        <div className="small text-body-secondary text-nowrap">
-                          <span>{item.user.new ? 'New' : 'Recurring'}</span> | Registered:{' '}
-                          {item.user.registered}
-                        </div>
-                      </CTableDataCell>
-                      <CTableDataCell className="text-center">
-                        <div>{item.studentlevel}</div>
-                      </CTableDataCell>
-                      <CTableDataCell className="text-center">
-                        <div>{item.TopicsTaken}</div>
-                      </CTableDataCell>
-                      <CTableDataCell>
-                        <div className="d-flex justify-content-between text-nowrap">
-                          <div className="fw-semibold">{item.TotalTimeSpent}</div>
-
-                        </div>
-                        <CProgress thin color="success" value={item.TotalTimeSpent} />
-                      </CTableDataCell>
-                      <CTableDataCell className="text-center">
-                        <div>{item.TotalQuestions}</div>
-                      </CTableDataCell>
-                      <CTableDataCell className="text-center">
-                        <div className="fw-semibold">{item.Attempts}</div>
-                      </CTableDataCell>
-                      <CTableDataCell>
-                        <div className="d-flex justify-content-between text-nowrap">
-                          <div className="fw-semibold">{item.AccuracyPercentage}</div>
-
-                        </div>
-                        <CProgress thin color="success" value={item.AccuracyPercentage} />
-                      </CTableDataCell>
-                      <CTableDataCell>
-                        <div className="small text-body-secondary text-nowrap">Last login</div>
-                        <div className="fw-semibold text-nowrap">{item.activity}</div>
-                      </CTableDataCell>
-                      <CTableDataCell className="text-center">
-                        <CButton
-                          size="sm"
-                          color="primary"
-                          variant="outline"
-                          onClick={() =>
-                            navigate(`/StudentChart/${item.studentId}`)
-                          }
-                        >
-                          View
-                        </CButton>
-                      </CTableDataCell>
-                    </CTableRow>*/
                   ))}
                 </CTableBody>
               </CTable>

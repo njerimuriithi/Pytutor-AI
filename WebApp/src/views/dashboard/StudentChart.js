@@ -20,6 +20,7 @@ import {
 } from '@coreui/react'
 import { useParams } from 'react-router-dom'
 import { getStyle } from '@coreui/utils'
+import { CSpinner } from '@coreui/react'
 
 const StudentChart = () => {
   const chartRef = useRef(null)
@@ -30,12 +31,19 @@ const StudentChart = () => {
 
 
   useEffect(() => {
-    loadData();
-  }, [studentId]);
+    if (!studentId || studentId === "undefined") {
+      setLoading(false)
+      return
+    }
+
+    loadData()
+  }, [studentId])
 
   const loadData = async () => {
+    if (!studentId || studentId === "undefined") return
     try {
       const res = await fetchIndividualStudentsData(studentId);
+      console.log('data',res)
       setData(res);
     } catch (err) {
       console.error(err);
@@ -102,7 +110,7 @@ const StudentChart = () => {
         data: bestTopics.map(t => t.Accuracy_Percent),
         backgroundColor: '#6aa84f',
         borderColor: '#36A2EB',
-        barThicknes:5,
+        barThickness:70,
       },
     ],
   }
@@ -138,12 +146,31 @@ const StudentChart = () => {
       },
     },
   }
+  if (loading) {
+    return (
+      <div className="d-flex justify-content-center mt-4">
+        <CSpinner color="primary" />
+      </div>
+    )
+  }
+  if (!student || Object.keys(data).length === 0){
+    return (
+      <CCard className="mb-4 text-center p-4">
+        <CCardBody>
+          <h5>No Student Selected</h5>
+          <p className="text-muted mb-0">
+            Please select a student to view performance.
+          </p>
+        </CCardBody>
+      </CCard>
+    )
+  }
   return (
     <>
       <div className="mb-4 shadow-sm">
         <CCardBody className="text-center">
 
-          <CAvatar color="primary" size="lg" className="mb-2">
+          <CAvatar color="success" size="lg" className="mb-2">
             {student?.Full_Name?.charAt(0) || "?"}
           </CAvatar>
 
@@ -167,7 +194,7 @@ const StudentChart = () => {
       <CCard className="mb-4">
         <CCardHeader as="h5">Student Assesment Performance</CCardHeader>
         <CCardBody   >
-          <CChart width="185px" height="50px" type="bar" data={bestChart} options={options}  ref={chartRef}/>
+          <CChart width="100px" height="50px" type="bar" data={bestChart} options={options}  ref={chartRef}/>
         </CCardBody>
       </CCard>
 

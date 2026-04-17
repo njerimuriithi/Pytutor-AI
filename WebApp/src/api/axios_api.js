@@ -128,6 +128,7 @@ export async function fetchStudentsPerfomanceData() {
 
 export async function fetchIndividualStudentsData(studentId) {
   try {
+    console.log('axios',studentId)
     const response = await axios.get(`${api_router}/studentdashboard/4`);
     return response.data;
   } catch (error) {

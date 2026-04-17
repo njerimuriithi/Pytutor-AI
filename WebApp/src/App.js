@@ -25,7 +25,6 @@ import './scss/style.scss'
 import './scss/examples.scss'
 //import Questions from "src/views/Learn/Assesments/Questions";
 //import RegisterCourses from "src/views/pages/register/RegisterCourses";
-
 // Containers
 const DefaultLayout = React.lazy(() => import('./layout/DefaultLayout'))
 
@@ -35,7 +34,7 @@ const Register = React.lazy(() => import('./views/pages/register/Register'))
 const RegisterCourses = React.lazy(() => import('./views/pages/register/RegisterCourses'))
 const Page404 = React.lazy(() => import('./views/pages/page404/Page404'))
 const Page500 = React.lazy(() => import('./views/pages/page500/Page500'))
-const Questions = React.lazy(() => import('./views/Learn/Assesments/Questions'))
+
 /**
  * Main Application Component
  *

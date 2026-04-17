@@ -24,7 +24,6 @@ const Questions = React.lazy(() => import('./views/Learn/Assesments/Questions'))
 const StudentDashboard = React.lazy(() => import('./views/dashboard/StudentDashboard'))
 const StudentChart = React.lazy(() => import('./views/dashboard/StudentChart'))
 
-const Widgets = React.lazy(() => import('./views/widgets/Widgets'))
 
 /**
  * Array of route configuration objects
@@ -56,7 +55,7 @@ const routes = [
     name: 'Student Chart',
     element: StudentChart,
   },
-  { path: '/widgets', name: 'Widgets', element: Widgets },
+
 ]
 
 export default routes

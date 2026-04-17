@@ -35,7 +35,7 @@ def get_individual_student_details(studentid: int, db: Session = Depends(get_db)
                     ON QT2.quiz_id = QR2.quiz_id
                 WHERE QR2.student_id = S.student_id
                 FOR XML PATH(''), TYPE
-            ).value('.', 'NVARCHAR(MAX)'), 1, 2, '') AS Topics_Taken,
+            ).value('.', 'NVARCHAR(MAX)'), 1, 2, '') AS  Topics_Taken,
 
             
             COUNT(QR.quiz_id) AS Total_Attempts,

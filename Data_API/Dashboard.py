@@ -187,6 +187,11 @@ def get_inactive_students(db: Session = Depends(get_db)):
                                 ELSE (ACT.correct_answers * 100.0 / ACT.answered_questions)
                                 END
                             ) < 50 THEN 'At Risk'
+                            WHEN AVG(
+                                CASE WHEN ACT.answered_questions = 0 THEN 0
+                                ELSE (ACT.correct_answers * 100.0 / ACT.answered_questions)
+                                END
+                            ) > 75 THEN 'Great Student'
 
                             WHEN AVG(
                                 CASE WHEN ACT.answered_questions = 0 THEN 0

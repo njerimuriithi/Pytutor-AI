@@ -1,26 +1,14 @@
 import React, {useEffect, useRef, useState} from 'react'
 
-import {CChart, CChartLine} from '@coreui/react-chartjs'
+import {CChart} from '@coreui/react-chartjs'
 import { getStyle } from '@coreui/utils'
 import {fetchTopicsData} from "src/api/axios_api";
 import {
-  CAvatar,
   CButton,
   CButtonGroup,
-  CCard,
-  CCardBody,
-  CCardFooter,
-  CCardHeader,
+  CCardBody, CCardHeader,
   CCol,
-  CProgress,
   CRow,
-  CTable,
-  CTableBody,
-  CTableDataCell,
-  CTableHead,
-  CTableHeaderCell,
-  CTableRow,
-
 } from '@coreui/react'
 
 
@@ -36,23 +24,17 @@ const MainChart = () => {
     const loadData = async () => {
       try {
         const res = await fetchTopicsData()
-
         setAllTopics(res.students_per_topic)
-
         const levels = Array.from(
           new Set(res.students_per_topic.map(t => t.level))
         )
-
         setAvailableLevels(levels)
         if (levels.length > 0) setActiveLevel(levels[0])
-
-        // NEW: Difficult topics chart
         setAllDifficultTopics(res.difficult_topics || [])
       } catch (err) {
         console.error(err)
       }
     }
-
     loadData()
   }, [])
 
@@ -66,8 +48,10 @@ const MainChart = () => {
       datasets: [
         {
           label: 'Students per Topic',
-          backgroundColor: '#4f9cf9',
+          backgroundColor: '#6aa84f',
           data: filtered.map(t => t.count),
+          borderColor: '#f39c12',
+          barThickness:120,
         },
       ],
     })
@@ -78,22 +62,26 @@ const MainChart = () => {
     const filtered = allDifficultTopics.filter(
       t => t.level === activeLevel
     )
+    const values = filtered.map(t => t.difficulty_score)
+    const maxValue = Math.max(...values)
 
     setDifficultChart({
       labels: filtered.map(t => t.topic),
       datasets: [
         {
           label: 'Difficulty Score',
-          data: filtered.map(t => t.difficulty_score),
-          backgroundColor: filtered.map(() => colors[activeLevel] || '#3498db')
+          data: values,
+          backgroundColor: values.map(v => getDifficultyColor(v, maxValue)),
+          borderWidth: 1,
         },
       ],
     })
   }, [activeLevel, allDifficultTopics])
-  const colors = {
-    beginner: '#2ecc71',
-    intermediate: '#f39c12',
-    advanced: '#e74c3c',
+
+  const getDifficultyColor = (value, max) => {
+    const ratio = value / max
+    const hue = (1 - ratio) * 120
+    return `hsla(${hue}, 70%, 50%, 0.9)`
   }
   useEffect(() => {
     const handleColorSchemeChange = () => {
@@ -125,7 +113,7 @@ const MainChart = () => {
     },
     scales: {
       x: {
-        display: true, // show the axis labels, no grid lines
+        display: true,
         grid: { display: false },
         ticks: { color: getStyle('--cui-body-color') },
         type: 'category',
@@ -134,6 +122,44 @@ const MainChart = () => {
         display: true,
         grid: { display: false },
         ticks: { color: getStyle('--cui-body-color'), beginAtZero: true },
+      },
+    },
+  }
+  const Pieoptions = {
+    plugins: {
+      legend: {
+        position: 'bottom',
+        labels: {
+          color: getStyle('--cui-body-color'),
+          generateLabels: (chart) => {
+            const data = chart.data
+            const dataset = data.datasets[0]
+            const total = dataset.data.reduce((a, b) => a + b, 0)
+
+            return data.labels.map((label, i) => {
+              const value = dataset.data[i]
+              const percentage = ((value / total) * 100).toFixed(1)
+
+              return {
+                text: `${label} (${percentage}%)`,
+                fillStyle: dataset.backgroundColor[i],
+                index: i,
+              }
+            })
+          },
+        },
+      },
+      tooltip: {
+        callbacks: {
+          label: function (context) {
+            const data = context.dataset.data
+            const total = data.reduce((a, b) => a + b, 0)
+            const value = context.raw
+            const percentage = ((value / total) * 100).toFixed(1)
+
+            return `${context.label}: ${value} (${percentage}%)`
+          },
+        },
       },
     },
   }
@@ -155,46 +181,39 @@ const MainChart = () => {
         </CButtonGroup>
       </div>
 
-      <CRow>
+      <CRow >
         {/* LEFT: Bar Chart */}
         <CCol md={8}>
-          <CCard className="mb-4">
-            <CCardBody>
-              <h6 className="mb-3">Students per Topic</h6>
+          <div className="mb-4" >
+            <CCardBody >
+              <CCardHeader className="mb-3" as="h5">No Of Students per Topic</CCardHeader>
 
               {chartData ? (
-                <CChart type="bar" data={chartData} options={options} />
+                <CChart type="bar" data={chartData} options={options} ref={chartRef}/>
               ) : (
                 <p>No data available</p>
               )}
             </CCardBody>
-          </CCard>
+          </div>
         </CCol>
 
-        {/* RIGHT: DONUT CHART */}
+        {/* RIGHT: Pie CHART */}
         <CCol md={4}>
-          <CCard className="mb-4">
+          <div className="mb-4">
             <CCardBody>
-              <h6 className="mb-3">Most Difficult Topics</h6>
+              <h6 className="mb-3">Difficult Topics</h6>
 
               {difficultChart ? (
                 <CChart
-                  type="doughnut"
+                  type="pie"
                   data={difficultChart}
-                  options={{
-                    plugins: {
-                      legend: {
-                        position: 'bottom',
-                      },
-                    },
-                    cutout: '65%',
-                  }}
+                  options={Pieoptions}
                 />
               ) : (
                 <p>No difficulty data</p>
               )}
             </CCardBody>
-          </CCard>
+          </div>
         </CCol>
       </CRow>
     </>

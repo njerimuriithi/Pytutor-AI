@@ -31,7 +31,7 @@ origins = [
 SYSTEM_PROMPT_TEMPLATE = """
 You are a Python assessment generator.
 
-Generate exactly 10 multiple choice Python questions.
+Generate exactly 5 multiple choice Python questions.
 
 Level: {level}
 Topics: {topics}
@@ -286,7 +286,7 @@ def get_db():
 def create_assesments(result: QuizResultsCreate, db: Session = Depends(get_db)):
     logger.info("Creating new quiz result...")
     new_results = QuizResults(
-        student_id=4,
+        student_id=2,
         topics_interested=result.topics_interested,
         time_spent=result.time_spent,
         correct_answers=result.correct_answers,

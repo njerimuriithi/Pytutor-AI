@@ -1,11 +1,12 @@
-import React,{useState} from 'react'
-import { CButton, CCard, CCardBody, CCardText, CCardTitle,CCardLink ,CListGroupItem,CModal,
+import React, { useState } from 'react'
+import {
+  CButton, CCard, CCardBody, CCardText, CCardTitle, CCardLink, CListGroupItem, CModal,
   CModalHeader, CModalTitle, CModalBody, CModalFooter, CCarousel, CCarouselItem
 } from '@coreui/react'
-import {basicTopics, InterMediateTopics, advancedTopics, splitLesson} from "src/views/pages/register/Topics";
-import {fetchTopicToLearn,saveLearningSession} from "src/api/axios_api";
+import { basicTopics, InterMediateTopics, advancedTopics, splitLesson } from "src/views/pages/register/Topics";
+import { fetchTopicToLearn, saveLearningSession } from "src/api/axios_api";
 import ReactMarkdown from "react-markdown";
-import {useNavigate} from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 const Courses = () => {
   const navigate = useNavigate();
   const [modalVisible, setModalVisible] = useState(false)
@@ -43,7 +44,7 @@ const Courses = () => {
     const timeSpent = Math.floor((endTime - lessonStartTime) / 1000); // seconds
 
     const payload = {
-      student_id: 4, // replace with logged-in user
+      student_id: 2, // replace with logged-in user
       topic: selectedTopic,
       level: selectedLevel,
       time_spent: timeSpent,
@@ -60,7 +61,7 @@ const Courses = () => {
 
 
   const renderTopicLinks = (topicsArray, level) => {
-      return topicsArray.map((topic, index) => (
+    return topicsArray.map((topic, index) => (
       <CListGroupItem key={index}>
         <CCardLink
           href="#"
@@ -74,7 +75,7 @@ const Courses = () => {
       </CListGroupItem>
     ))
   }
-  return(
+  return (
     <>
       <CCard className="w-75 mb-3">
         <CCardBody>
@@ -125,16 +126,16 @@ const Courses = () => {
           )}
         </CModalBody>
         <CModalFooter>
-          <CButton color="secondary"  onClick={handleCloseLesson}>
+          <CButton color="secondary" onClick={handleCloseLesson}>
             Close
           </CButton>
           <CButton color="primary"
-                   onClick={() => {
-                     // Navigate to questions page
-                     navigate('/Questions', {
-                       state: { level: selectedLevel, topics:[selectedTopic] }
-                     });
-                   }}
+            onClick={() => {
+              // Navigate to questions page
+              navigate('/Questions', {
+                state: { level: selectedLevel, topics: [selectedTopic] }
+              });
+            }}
           >Test Your Understanding</CButton>
         </CModalFooter>
       </CModal>
@@ -143,4 +144,4 @@ const Courses = () => {
     </>
   )
 }
-export  default Courses;
+export default Courses;
